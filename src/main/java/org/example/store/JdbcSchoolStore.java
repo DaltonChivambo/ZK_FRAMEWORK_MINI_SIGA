@@ -249,6 +249,28 @@ public class JdbcSchoolStore implements SchoolStore {
     }
 
     @Override
+    public List<Subject> getEnrolledSubjectsByStudent(int studentId) {
+        String sql = "SELECT s.id, s.nome, s.course_id, s.teacher_id " +
+                "FROM subjects s " +
+                "INNER JOIN enrollments e ON e.subject_id = s.id " +
+                "WHERE e.student_id = ? " +
+                "ORDER BY s.id";
+        List<Subject> subjects = new ArrayList<>();
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, studentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    subjects.add(subjectFromRow(rs));
+                }
+            }
+            return subjects;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao listar disciplinas inscritas do estudante.", e);
+        }
+    }
+
+    @Override
     public List<GradeRecord> getGradesByStudent(int studentId) {
         String sql = "SELECT id, student_id, subject_id, teacher_id, avaliacao, nota FROM grades WHERE student_id = ? ORDER BY id";
         List<GradeRecord> grades = new ArrayList<>();
@@ -302,6 +324,76 @@ public class JdbcSchoolStore implements SchoolStore {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Falha ao associar professor a disciplina.", e);
+        }
+    }
+
+    @Override
+    public void enrollStudentInSubject(int studentId, int subjectId) {
+        String sql = "INSERT IGNORE INTO enrollments(student_id, subject_id) VALUES (?, ?)";
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, studentId);
+            ps.setInt(2, subjectId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao inscrever estudante na disciplina.", e);
+        }
+    }
+
+    @Override
+    public void clearStudentEnrollments(int studentId) {
+        String sql = "DELETE FROM enrollments WHERE student_id = ?";
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, studentId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao limpar inscricoes do estudante.", e);
+        }
+    }
+
+    @Override
+    public boolean isStudentEnrolledInSubject(int studentId, int subjectId) {
+        String sql = "SELECT COUNT(*) FROM enrollments WHERE student_id = ? AND subject_id = ?";
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, studentId);
+            ps.setInt(2, subjectId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao validar inscricao do estudante.", e);
+        }
+    }
+
+    @Override
+    public List<Student> getEnrolledStudentsBySubject(int subjectId) {
+        String sql = "SELECT u.id, u.nome, u.username, u.password, u.course_id " +
+                "FROM users u " +
+                "INNER JOIN enrollments e ON e.student_id = u.id " +
+                "WHERE e.subject_id = ? AND u.role = 'ESTUDANTE' " +
+                "ORDER BY u.nome";
+        List<Student> students = new ArrayList<>();
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, subjectId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Student s = new Student(
+                            rs.getInt("id"),
+                            rs.getString("nome"),
+                            rs.getString("username"),
+                            rs.getString("password")
+                    );
+                    s.setCourseId(nullableInt(rs, "course_id"));
+                    students.add(s);
+                }
+            }
+            return students;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao listar estudantes inscritos na disciplina.", e);
         }
     }
 
@@ -430,6 +522,13 @@ public class JdbcSchoolStore implements SchoolStore {
                     "teacher_id INT NOT NULL," +
                     "avaliacao VARCHAR(120) NOT NULL," +
                     "nota DECIMAL(5,2) NOT NULL" +
+                    ")");
+            st.execute("CREATE TABLE IF NOT EXISTS enrollments (" +
+                    "student_id INT NOT NULL," +
+                    "subject_id INT NOT NULL," +
+                    "PRIMARY KEY (student_id, subject_id)," +
+                    "CONSTRAINT fk_enrollment_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE," +
+                    "CONSTRAINT fk_enrollment_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE" +
                     ")");
         } catch (SQLException e) {
             throw new IllegalStateException("Falha ao inicializar schema MySQL.", e);

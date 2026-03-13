@@ -29,16 +29,36 @@
             <div sclass="main-content">
                 <div sclass="stats-grid">
                     <div sclass="stat-card"><label value="Minhas Disciplinas"/><label sclass="stat-value" value="@load(vm.mySubjects.size())"/></div>
-                    <div sclass="stat-card"><label value="Estudantes Registados"/><label sclass="stat-value" value="@load(vm.studentCount)"/></div>
+                    <div sclass="stat-card"><label value="Estudantes Elegiveis"/><label sclass="stat-value" value="@load(vm.eligibleStudentCount)"/></div>
                 </div>
 
                 <div sclass="card" visible="@load(vm.activeSection eq 'teacher-grades')">
                     <label sclass="card-title" value="Publicar Notas"/>
-                    <label sclass="hint-text" value="Publique avaliacoes dos estudantes das suas disciplinas."/>
+                    <label sclass="hint-text" value="Selecione a disciplina e o sistema lista apenas estudantes do curso dessa disciplina."/>
                     <grid sclass="form-grid">
                         <rows>
-                            <row><label value="ID do Estudante"/><intbox value="@bind(vm.selectedStudentId)" hflex="1"/></row>
-                            <row><label value="ID da Disciplina"/><intbox value="@bind(vm.selectedSubjectId)" hflex="1"/></row>
+                            <row>
+                                <label value="Disciplina"/>
+                                <combobox hflex="1" model="@load(vm.mySubjects)" selectedItem="@bind(vm.selectedSubjectForGrade)"
+                                          readonly="true" buttonVisible="true" onChange="@command('onTeacherSubjectChange')">
+                                    <template name="model" var="d">
+                                        <comboitem label="@load(d.nome)" description="@load(d.id)" value="@load(d)"/>
+                                    </template>
+                                </combobox>
+                            </row>
+                            <row>
+                                <label value="Curso da Disciplina"/>
+                                <label value="@load(vm.selectedSubjectCourseName)"/>
+                            </row>
+                            <row>
+                                <label value="Estudante"/>
+                                <combobox hflex="1" model="@load(vm.eligibleStudentsForGrade)" selectedItem="@bind(vm.selectedStudentForGrade)"
+                                          readonly="true" buttonVisible="true">
+                                    <template name="model" var="s">
+                                        <comboitem label="@load(s.nome)" description="@load(s.id)" value="@load(s)"/>
+                                    </template>
+                                </combobox>
+                            </row>
                             <row><label value="Avaliacao"/><textbox value="@bind(vm.avaliacao)" hflex="1" placeholder="Ex: Teste 1"/></row>
                             <row><label value="Nota (0-20)"/><doublebox value="@bind(vm.nota)" hflex="1"/></row>
                         </rows>

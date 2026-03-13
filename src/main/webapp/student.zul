@@ -29,6 +29,7 @@
                 <div sclass="stats-grid">
                     <div sclass="stat-card"><label value="Total de Avaliacoes"/><label sclass="stat-value" value="@load(vm.myGrades.size())"/></div>
                     <div sclass="stat-card"><label value="Media Geral"/><label sclass="stat-value" value="@load(vm.myAverage)"/></div>
+                    <div sclass="stat-card"><label value="Meu Curso"/><label sclass="stat-value" value="@load(vm.myCourseName)"/></div>
                 </div>
 
                 <div sclass="card" visible="@load(vm.activeSection eq 'student-grades')">
@@ -46,6 +47,24 @@
                                 <listcell label="@load(grade.avaliacao)"/>
                                 <listcell label="@load(grade.nota)"/>
                                 <listcell label="@load(grade.professor)"/>
+                            </listitem>
+                        </template>
+                    </listbox>
+                </div>
+
+                <div sclass="card" visible="@load(vm.activeSection eq 'student-grades')">
+                    <label sclass="card-title" value="Minhas Disciplinas Inscritas"/>
+                    <listbox model="@load(vm.myCourseSubjects)" width="100%" emptyMessage="Sem disciplinas inscritas.">
+                        <listhead>
+                            <listheader label="ID"/>
+                            <listheader label="Disciplina"/>
+                            <listheader label="Professor"/>
+                        </listhead>
+                        <template name="model" var="d">
+                            <listitem>
+                                <listcell label="@load(d.id)"/>
+                                <listcell label="@load(d.nome)"/>
+                                <listcell label="@load(vm.teacherName(d.teacherId))"/>
                             </listitem>
                         </template>
                     </listbox>

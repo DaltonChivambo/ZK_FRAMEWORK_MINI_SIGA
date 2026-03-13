@@ -29,7 +29,11 @@ public class SchoolService {
 
     public Subject registrarDisciplina(String nome, int courseId) {
         validarCurso(courseId);
-        return store.createSubject(nome, courseId);
+        Subject subject = store.createSubject(nome, courseId);
+        // Inscricao automatica: todos estudantes do curso ficam inscritos na disciplina.
+        listarEstudantesPorCurso(courseId)
+                .forEach(student -> store.enrollStudentInSubject(student.getId(), subject.getId()));
+        return subject;
     }
 
     public void associarEstudanteAoCurso(int studentId, int courseId) {
@@ -37,6 +41,10 @@ public class SchoolService {
                 .orElseThrow(() -> new IllegalArgumentException("Estudante nao encontrado."));
         validarCurso(courseId);
         store.assignStudentToCourse(studentId, courseId);
+        // Reinscreve o estudante nas disciplinas do novo curso.
+        store.clearStudentEnrollments(studentId);
+        listarDisciplinasPorCurso(courseId)
+                .forEach(subject -> store.enrollStudentInSubject(studentId, subject.getId()));
     }
 
     public void associarProfessorADisciplina(int teacherId, int subjectId) {
@@ -59,8 +67,8 @@ public class SchoolService {
         if (!teacher.getSubjectIds().contains(subjectId)) {
             throw new IllegalArgumentException("Professor nao associado a disciplina.");
         }
-        if (student.getCourseId() == null || student.getCourseId() != subject.getCourseId()) {
-            throw new IllegalArgumentException("Estudante nao pertence ao curso da disciplina.");
+        if (!store.isStudentEnrolledInSubject(studentId, subjectId)) {
+            throw new IllegalArgumentException("Estudante nao esta inscrito na disciplina.");
         }
         if (nota < 0 || nota > 20) {
             throw new IllegalArgumentException("Nota invalida. Use intervalo de 0 a 20.");
@@ -99,14 +107,46 @@ public class SchoolService {
         return store.getSubjects();
     }
 
+    public List<Subject> listarDisciplinasInscritasDoEstudante(int studentId) {
+        return store.getEnrolledSubjectsByStudent(studentId);
+    }
+
+    public List<Student> listarEstudantesInscritosNaDisciplina(int subjectId) {
+        return store.getEnrolledStudentsBySubject(subjectId);
+    }
+
     public Optional<User> buscarUsuario(int id) {
         return store.findUser(id);
+    }
+
+    public Optional<Student> findStudent(int id) {
+        return store.findStudent(id);
+    }
+
+    public Optional<Course> findCourse(int id) {
+        return store.findCourse(id);
+    }
+
+    public Optional<Teacher> findTeacher(int id) {
+        return store.findTeacher(id);
     }
 
     private void validarCurso(int courseId) {
         if (store.findCourse(courseId).isEmpty()) {
             throw new IllegalArgumentException("Curso nao encontrado.");
         }
+    }
+
+    private List<Student> listarEstudantesPorCurso(int courseId) {
+        return store.getStudents().stream()
+                .filter(s -> s.getCourseId() != null && s.getCourseId() == courseId)
+                .collect(Collectors.toList());
+    }
+
+    private List<Subject> listarDisciplinasPorCurso(int courseId) {
+        return store.getSubjects().stream()
+                .filter(s -> s.getCourseId() == courseId)
+                .collect(Collectors.toList());
     }
 
     public static class GradeView {

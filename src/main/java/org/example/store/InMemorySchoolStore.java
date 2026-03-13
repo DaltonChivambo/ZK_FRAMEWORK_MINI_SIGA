@@ -20,6 +20,7 @@ public class InMemorySchoolStore implements SchoolStore {
     private final Map<Integer, Course> courses = new ConcurrentHashMap<>();
     private final Map<Integer, Subject> subjects = new ConcurrentHashMap<>();
     private final Map<Integer, GradeRecord> grades = new ConcurrentHashMap<>();
+    private final Map<Integer, List<Integer>> subjectEnrollments = new ConcurrentHashMap<>();
 
     @Override
     public Admin createAdmin(String nome, String username, String password) {
@@ -53,6 +54,7 @@ public class InMemorySchoolStore implements SchoolStore {
     public Subject createSubject(String nome, int courseId) {
         Subject subject = new Subject(subjectSeq.getAndIncrement(), nome, courseId);
         subjects.put(subject.getId(), subject);
+        subjectEnrollments.put(subject.getId(), new ArrayList<>());
         return subject;
     }
 
@@ -139,6 +141,13 @@ public class InMemorySchoolStore implements SchoolStore {
     }
 
     @Override
+    public List<Subject> getEnrolledSubjectsByStudent(int studentId) {
+        return subjects.values().stream()
+                .filter(s -> subjectEnrollments.getOrDefault(s.getId(), List.of()).contains(studentId))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<GradeRecord> getGradesByStudent(int studentId) {
         return grades.values()
                 .stream()
@@ -161,6 +170,34 @@ public class InMemorySchoolStore implements SchoolStore {
                 .orElseThrow(() -> new IllegalArgumentException("Disciplina nao encontrada."));
         subject.setTeacherId(teacherId);
         teacher.getSubjectIds().add(subjectId);
+    }
+
+    @Override
+    public void enrollStudentInSubject(int studentId, int subjectId) {
+        List<Integer> enrolled = subjectEnrollments.computeIfAbsent(subjectId, key -> new ArrayList<>());
+        if (!enrolled.contains(studentId)) {
+            enrolled.add(studentId);
+        }
+    }
+
+    @Override
+    public void clearStudentEnrollments(int studentId) {
+        subjectEnrollments.values().forEach(list -> list.removeIf(id -> id == studentId));
+    }
+
+    @Override
+    public boolean isStudentEnrolledInSubject(int studentId, int subjectId) {
+        return subjectEnrollments.getOrDefault(subjectId, List.of()).contains(studentId);
+    }
+
+    @Override
+    public List<Student> getEnrolledStudentsBySubject(int subjectId) {
+        List<Integer> ids = subjectEnrollments.getOrDefault(subjectId, List.of());
+        return ids.stream()
+                .map(this::findStudent)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     @Override

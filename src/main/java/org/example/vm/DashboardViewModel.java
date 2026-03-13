@@ -13,6 +13,7 @@ import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zul.Messagebox;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DashboardViewModel {
@@ -38,6 +39,8 @@ public class DashboardViewModel {
     private Course selectedCourseForStudent;
     private Teacher selectedTeacherForSubject;
     private Subject selectedSubjectForTeacher;
+    private Subject selectedSubjectForGrade;
+    private Student selectedStudentForGrade;
 
     private String avaliacao;
     private Double nota;
@@ -160,13 +163,25 @@ public class DashboardViewModel {
     @Command
     @NotifyChange("*")
     public void publicarNota() {
-        if (selectedStudentId == null || selectedSubjectId == null || avaliacao == null || avaliacao.isBlank() || nota == null) {
+        if (selectedStudentForGrade == null || selectedSubjectForGrade == null || avaliacao == null || avaliacao.isBlank() || nota == null) {
             throw new IllegalArgumentException("Preencha os dados da avaliacao.");
         }
-        schoolService.publicarNota(authUser.getId(), selectedStudentId, selectedSubjectId, avaliacao, nota);
+        schoolService.publicarNota(
+                authUser.getId(),
+                selectedStudentForGrade.getId(),
+                selectedSubjectForGrade.getId(),
+                avaliacao,
+                nota
+        );
         avaliacao = "";
         nota = null;
         Messagebox.show("Nota publicada com sucesso.");
+    }
+
+    @Command
+    @NotifyChange({"selectedStudentForGrade", "eligibleStudentsForGrade", "selectedSubjectCourseName"})
+    public void onTeacherSubjectChange() {
+        selectedStudentForGrade = null;
     }
 
     private void definirSecaoInicial() {
@@ -281,6 +296,35 @@ public class DashboardViewModel {
                 .collect(Collectors.toList());
     }
 
+    public List<Student> getEligibleStudentsForGrade() {
+        if (!isProfessor() || selectedSubjectForGrade == null) {
+            return List.of();
+        }
+        return schoolService.listarEstudantesInscritosNaDisciplina(selectedSubjectForGrade.getId());
+    }
+
+    public int getEligibleStudentCount() {
+        if (!isProfessor()) {
+            return 0;
+        }
+        Set<Integer> studentIds = getMySubjects().stream()
+                .flatMap(subject -> schoolService.listarEstudantesInscritosNaDisciplina(subject.getId()).stream())
+                .map(Student::getId)
+                .collect(Collectors.toSet());
+        return studentIds.size();
+    }
+
+    public String getSelectedSubjectCourseName() {
+        if (selectedSubjectForGrade == null) {
+            return "Selecione uma disciplina";
+        }
+        return schoolService.listarCursos().stream()
+                .filter(c -> c.getId() == selectedSubjectForGrade.getCourseId())
+                .map(Course::getNome)
+                .findFirst()
+                .orElse("Curso nao encontrado");
+    }
+
     public int getStudentCount() {
         return schoolService.listarEstudantes().size();
     }
@@ -307,6 +351,35 @@ public class DashboardViewModel {
         }
         double avg = grades.stream().mapToDouble(SchoolService.GradeView::getNota).average().orElse(0);
         return String.format("%.2f", avg);
+    }
+
+    public String getMyCourseName() {
+        if (!isEstudante()) {
+            return "-";
+        }
+        Student me = schoolService.findStudent(authUser.getId()).orElse(null);
+        if (me == null || me.getCourseId() == null) {
+            return "Nao associado";
+        }
+        return schoolService.findCourse(me.getCourseId())
+                .map(Course::getNome)
+                .orElse("Nao associado");
+    }
+
+    public List<Subject> getMyCourseSubjects() {
+        if (!isEstudante()) {
+            return List.of();
+        }
+        return schoolService.listarDisciplinasInscritasDoEstudante(authUser.getId());
+    }
+
+    public String getTeacherName(Integer teacherId) {
+        if (teacherId == null) {
+            return "Sem professor";
+        }
+        return schoolService.findTeacher(teacherId)
+                .map(Teacher::getNome)
+                .orElse("Sem professor");
     }
 
     public String getActiveSection() {
@@ -477,6 +550,22 @@ public class DashboardViewModel {
 
     public void setSelectedSubjectId(Integer selectedSubjectId) {
         this.selectedSubjectId = selectedSubjectId;
+    }
+
+    public Subject getSelectedSubjectForGrade() {
+        return selectedSubjectForGrade;
+    }
+
+    public void setSelectedSubjectForGrade(Subject selectedSubjectForGrade) {
+        this.selectedSubjectForGrade = selectedSubjectForGrade;
+    }
+
+    public Student getSelectedStudentForGrade() {
+        return selectedStudentForGrade;
+    }
+
+    public void setSelectedStudentForGrade(Student selectedStudentForGrade) {
+        this.selectedStudentForGrade = selectedStudentForGrade;
     }
 
     public String getAvaliacao() {

@@ -40,11 +40,21 @@ public interface SchoolStore {
 
     List<Subject> getSubjects();
 
+    List<Subject> getEnrolledSubjectsByStudent(int studentId);
+
     List<GradeRecord> getGradesByStudent(int studentId);
 
     void assignStudentToCourse(int studentId, int courseId);
 
     void assignTeacherToSubject(int teacherId, int subjectId);
+
+    void enrollStudentInSubject(int studentId, int subjectId);
+
+    void clearStudentEnrollments(int studentId);
+
+    boolean isStudentEnrolledInSubject(int studentId, int subjectId);
+
+    List<Student> getEnrolledStudentsBySubject(int subjectId);
 
     boolean hasAnyUsers();
 }
