@@ -13,6 +13,7 @@ import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zul.Messagebox;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -382,6 +383,40 @@ public class DashboardViewModel {
                 .orElse("Sem professor");
     }
 
+    public List<StudentCourseAssociationView> getStudentCourseAssociations() {
+        Map<Integer, String> courseById = schoolService.listarCursos().stream()
+                .collect(Collectors.toMap(Course::getId, Course::getNome, (a, b) -> a));
+        return schoolService.listarEstudantes().stream()
+                .filter(s -> s.getCourseId() != null)
+                .map(s -> new StudentCourseAssociationView(
+                        s.getId(),
+                        s.getNome(),
+                        s.getCourseId(),
+                        courseById.getOrDefault(s.getCourseId(), "Curso nao encontrado"),
+                        schoolService.listarDisciplinasInscritasDoEstudante(s.getId()).size()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    public List<TeacherSubjectAssociationView> getTeacherSubjectAssociations() {
+        Map<Integer, String> teacherById = schoolService.listarProfessores().stream()
+                .collect(Collectors.toMap(Teacher::getId, Teacher::getNome, (a, b) -> a));
+        Map<Integer, String> courseById = schoolService.listarCursos().stream()
+                .collect(Collectors.toMap(Course::getId, Course::getNome, (a, b) -> a));
+        return schoolService.listarDisciplinas().stream()
+                .filter(s -> s.getTeacherId() != null)
+                .map(s -> new TeacherSubjectAssociationView(
+                        s.getTeacherId(),
+                        teacherById.getOrDefault(s.getTeacherId(), "Professor nao encontrado"),
+                        s.getId(),
+                        s.getNome(),
+                        s.getCourseId(),
+                        courseById.getOrDefault(s.getCourseId(), "Curso nao encontrado"),
+                        schoolService.listarEstudantesInscritosNaDisciplina(s.getId()).size()
+                ))
+                .collect(Collectors.toList());
+    }
+
     public String getActiveSection() {
         return activeSection;
     }
@@ -582,5 +617,89 @@ public class DashboardViewModel {
 
     public void setNota(Double nota) {
         this.nota = nota;
+    }
+
+    public static class StudentCourseAssociationView {
+        private final int studentId;
+        private final String studentName;
+        private final int courseId;
+        private final String courseName;
+        private final int enrolledSubjects;
+
+        public StudentCourseAssociationView(int studentId, String studentName, int courseId, String courseName, int enrolledSubjects) {
+            this.studentId = studentId;
+            this.studentName = studentName;
+            this.courseId = courseId;
+            this.courseName = courseName;
+            this.enrolledSubjects = enrolledSubjects;
+        }
+
+        public int getStudentId() {
+            return studentId;
+        }
+
+        public String getStudentName() {
+            return studentName;
+        }
+
+        public int getCourseId() {
+            return courseId;
+        }
+
+        public String getCourseName() {
+            return courseName;
+        }
+
+        public int getEnrolledSubjects() {
+            return enrolledSubjects;
+        }
+    }
+
+    public static class TeacherSubjectAssociationView {
+        private final int teacherId;
+        private final String teacherName;
+        private final int subjectId;
+        private final String subjectName;
+        private final int courseId;
+        private final String courseName;
+        private final int enrolledStudents;
+
+        public TeacherSubjectAssociationView(int teacherId, String teacherName, int subjectId, String subjectName, int courseId, String courseName, int enrolledStudents) {
+            this.teacherId = teacherId;
+            this.teacherName = teacherName;
+            this.subjectId = subjectId;
+            this.subjectName = subjectName;
+            this.courseId = courseId;
+            this.courseName = courseName;
+            this.enrolledStudents = enrolledStudents;
+        }
+
+        public int getTeacherId() {
+            return teacherId;
+        }
+
+        public String getTeacherName() {
+            return teacherName;
+        }
+
+        public int getSubjectId() {
+            return subjectId;
+        }
+
+        public String getSubjectName() {
+            return subjectName;
+        }
+
+        public int getCourseId() {
+            return courseId;
+        }
+
+        public String getCourseName() {
+            return courseName;
+        }
+
+        public int getEnrolledStudents() {
+            return enrolledStudents;
+        }
     }
 }

@@ -67,9 +67,23 @@
                 </div>
 
                 <div sclass="card" visible="@load(vm.activeSection eq 'teacher-ids')">
-                    <label sclass="card-title" value="Referencias de IDs"/>
+                    <label sclass="card-title" value="Referencias de Turmas e Disciplinas"/>
+                    <label sclass="hint-text" value="Selecione a disciplina para ver apenas os estudantes realmente inscritos."/>
+                    <grid sclass="form-grid">
+                        <rows>
+                            <row>
+                                <label value="Disciplina"/>
+                                <combobox hflex="1" model="@load(vm.mySubjects)" selectedItem="@bind(vm.selectedSubjectForGrade)"
+                                          readonly="true" buttonVisible="true" onChange="@command('onTeacherSubjectChange')">
+                                    <template name="model" var="d">
+                                        <comboitem label="@load(d.nome)" description="@load(d.id)" value="@load(d)"/>
+                                    </template>
+                                </combobox>
+                            </row>
+                        </rows>
+                    </grid>
                     <hlayout hflex="1" spacing="12px">
-                        <listbox model="@load(vm.students)" hflex="1" height="220px" emptyMessage="Sem estudantes">
+                        <listbox model="@load(vm.eligibleStudentsForGrade)" hflex="1" height="220px" emptyMessage="Sem estudantes inscritos para a disciplina selecionada.">
                             <listhead><listheader label="ID" width="60px"/><listheader label="Estudante"/></listhead>
                             <template name="model" var="s"><listitem><listcell label="@load(s.id)"/><listcell label="@load(s.nome)"/></listitem></template>
                         </listbox>

@@ -116,6 +116,12 @@
     gap: 12px;
 }
 
+.assoc-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
 .ids-block {
     border: 1px solid #e6ebff;
     border-radius: 12px;
