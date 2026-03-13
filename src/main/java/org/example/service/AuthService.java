@@ -2,15 +2,15 @@ package org.example.service;
 
 import org.example.model.User;
 import org.example.security.SessionTokenManager;
-import org.example.store.InMemorySchoolStore;
+import org.example.store.SchoolStore;
 
 import java.util.Optional;
 
 public class AuthService {
-    private final InMemorySchoolStore store;
+    private final SchoolStore store;
     private final SessionTokenManager tokenManager;
 
-    public AuthService(InMemorySchoolStore store, SessionTokenManager tokenManager) {
+    public AuthService(SchoolStore store, SessionTokenManager tokenManager) {
         this.store = store;
         this.tokenManager = tokenManager;
     }

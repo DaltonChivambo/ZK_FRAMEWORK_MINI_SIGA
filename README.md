@@ -16,13 +16,22 @@ Mini sistema academico com 3 perfis:
 
 ## Como executar
 
-1. Gerar o WAR:
+1. Configurar MySQL (a app cria tabelas automaticamente):
+   ```bash
+   export DB_URL="jdbc:mysql://localhost:3306/mini_siga?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+   export DB_USER="root"
+   export DB_PASSWORD=""
+   ```
+
+2. Garantir que o MySQL esta ativo.
+
+3. Gerar o WAR:
    ```bash
    mvn clean package
    ```
-2. O artefacto sera gerado em:
+3. O artefacto sera gerado em:
    - `target/zk-siga.war`
-3. Deploy no Tomcat (copiar para `webapps/`).
+4. Deploy no Tomcat (copiar para `webapps/`).
 
 ## Credenciais iniciais
 
@@ -33,7 +42,9 @@ Mini sistema academico com 3 perfis:
 ## UI (ZK)
 
 - Login: `/zk-siga/login.zul`
-- Dashboard: `/zk-siga/dashboard.zul`
+- Admin: `/zk-siga/admin.zul`
+- Professor: `/zk-siga/teacher.zul`
+- Estudante: `/zk-siga/student.zul`
 
 ## Endpoints REST
 

@@ -1,7 +1,7 @@
 package org.example.service;
 
 import org.example.model.*;
-import org.example.store.InMemorySchoolStore;
+import org.example.store.SchoolStore;
 
 import java.util.Comparator;
 import java.util.List;
@@ -9,9 +9,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SchoolService {
-    private final InMemorySchoolStore store;
+    private final SchoolStore store;
 
-    public SchoolService(InMemorySchoolStore store) {
+    public SchoolService(SchoolStore store) {
         this.store = store;
     }
 
@@ -33,10 +33,10 @@ public class SchoolService {
     }
 
     public void associarEstudanteAoCurso(int studentId, int courseId) {
-        Student student = store.findStudent(studentId)
+        store.findStudent(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Estudante nao encontrado."));
         validarCurso(courseId);
-        student.setCourseId(courseId);
+        store.assignStudentToCourse(studentId, courseId);
     }
 
     public void associarProfessorADisciplina(int teacherId, int subjectId) {
@@ -45,8 +45,7 @@ public class SchoolService {
         Subject subject = store.findSubject(subjectId)
                 .orElseThrow(() -> new IllegalArgumentException("Disciplina nao encontrada."));
 
-        subject.setTeacherId(teacherId);
-        teacher.getSubjectIds().add(subjectId);
+        store.assignTeacherToSubject(teacherId, subjectId);
     }
 
     public GradeRecord publicarNota(int teacherId, int studentId, int subjectId, String avaliacao, double nota) {

@@ -5,14 +5,14 @@ import org.example.model.Student;
 import org.example.model.Subject;
 import org.example.model.Teacher;
 import org.example.service.SchoolService;
-import org.example.store.InMemorySchoolStore;
+import org.example.store.SchoolStore;
 
 public final class DataBootstrap {
     private DataBootstrap() {
     }
 
-    public static void seed(SchoolService schoolService, InMemorySchoolStore store) {
-        if (!store.getUsers().isEmpty()) {
+    public static void seed(SchoolService schoolService, SchoolStore store) {
+        if (store.hasAnyUsers()) {
             return;
         }
 
