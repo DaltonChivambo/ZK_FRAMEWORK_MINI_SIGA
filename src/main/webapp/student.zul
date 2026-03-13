@@ -53,6 +53,24 @@
                 </div>
 
                 <div sclass="card" visible="@load(vm.activeSection eq 'student-grades')">
+                    <label sclass="card-title" value="Media por Disciplina"/>
+                    <listbox model="@load(vm.mySubjectAverages)" width="100%" emptyMessage="Sem medias por disciplina ainda.">
+                        <listhead>
+                            <listheader label="Disciplina"/>
+                            <listheader label="Media"/>
+                            <listheader label="Avaliacoes"/>
+                        </listhead>
+                        <template name="model" var="m">
+                            <listitem>
+                                <listcell label="@load(m.disciplina)"/>
+                                <listcell label="@load(m.media)"/>
+                                <listcell label="@load(m.totalAvaliacoes)"/>
+                            </listitem>
+                        </template>
+                    </listbox>
+                </div>
+
+                <div sclass="card" visible="@load(vm.activeSection eq 'student-grades')">
                     <label sclass="card-title" value="Minhas Disciplinas Inscritas"/>
                     <listbox model="@load(vm.myCourseSubjectViews)" width="100%" emptyMessage="Sem disciplinas inscritas.">
                         <listhead>

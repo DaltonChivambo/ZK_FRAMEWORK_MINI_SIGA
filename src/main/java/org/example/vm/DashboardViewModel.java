@@ -12,6 +12,7 @@ import org.zkoss.zk.ui.Session;
 import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zul.Messagebox;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -446,6 +447,29 @@ public class DashboardViewModel {
         }
         double avg = grades.stream().mapToDouble(SchoolService.GradeView::getNota).average().orElse(0);
         return String.format("%.2f", avg);
+    }
+
+    public List<SubjectAverageView> getMySubjectAverages() {
+        if (!isEstudante()) {
+            return List.of();
+        }
+        return getMyGrades().stream()
+                .collect(Collectors.groupingBy(SchoolService.GradeView::getDisciplina))
+                .entrySet()
+                .stream()
+                .map(entry -> {
+                    double avg = entry.getValue().stream()
+                            .mapToDouble(SchoolService.GradeView::getNota)
+                            .average()
+                            .orElse(0);
+                    return new SubjectAverageView(
+                            entry.getKey(),
+                            String.format("%.2f", avg),
+                            entry.getValue().size()
+                    );
+                })
+                .sorted(Comparator.comparing(SubjectAverageView::getDisciplina))
+                .collect(Collectors.toList());
     }
 
     public String getMyCourseName() {
@@ -955,6 +979,30 @@ public class DashboardViewModel {
 
         public String getTeacherName() {
             return teacherName;
+        }
+    }
+
+    public static class SubjectAverageView {
+        private final String disciplina;
+        private final String media;
+        private final int totalAvaliacoes;
+
+        public SubjectAverageView(String disciplina, String media, int totalAvaliacoes) {
+            this.disciplina = disciplina;
+            this.media = media;
+            this.totalAvaliacoes = totalAvaliacoes;
+        }
+
+        public String getDisciplina() {
+            return disciplina;
+        }
+
+        public String getMedia() {
+            return media;
+        }
+
+        public int getTotalAvaliacoes() {
+            return totalAvaliacoes;
         }
     }
 }
