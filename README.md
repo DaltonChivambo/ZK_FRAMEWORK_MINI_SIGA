@@ -84,6 +84,23 @@ curl -I http://localhost:8080/zk-siga/login.zul
 - Professor: `http://localhost:8080/zk-siga/teacher.zul`
 - Estudante: `http://localhost:8080/zk-siga/student.zul`
 
+## Telas para apreciacao
+
+- Estudantes (admin): [estudantes_admin](docs/screenshots/estudantes_admin.png)
+- Associacoes (admin): [associacoes_admin](docs/screenshots/associacoes_admin.png)
+- Docente (professor): [docente](docs/screenshots/docente.png)
+- Estudante: [estudante](docs/screenshots/estudante.png)
+
+### Preview
+
+![estudantes_admin](docs/screenshots/estudantes_admin.png)
+
+![associacoes_admin](docs/screenshots/associacoes_admin.png)
+
+![docente](docs/screenshots/docente.png)
+
+![estudante](docs/screenshots/estudante.png)
+
 ## Credenciais iniciais (seed)
 
 - `admin / admin123`
