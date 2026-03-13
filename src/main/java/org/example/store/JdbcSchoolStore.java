@@ -68,6 +68,22 @@ public class JdbcSchoolStore implements SchoolStore {
     }
 
     @Override
+    public Assessment createAssessment(int subjectId, int teacherId, String nome) {
+        String sql = "INSERT INTO assessments(subject_id, teacher_id, nome) VALUES (?, ?, ?)";
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, subjectId);
+            ps.setInt(2, teacherId);
+            ps.setString(3, nome);
+            ps.executeUpdate();
+            int id = generatedId(ps);
+            return new Assessment(id, subjectId, teacherId, nome);
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao criar avaliacao.", e);
+        }
+    }
+
+    @Override
     public GradeRecord createGrade(int studentId, int subjectId, int teacherId, String avaliacao, double nota) {
         String sql = "INSERT INTO grades(student_id, subject_id, teacher_id, avaliacao, nota) VALUES (?, ?, ?, ?, ?)";
         try (Connection c = connection();
@@ -82,6 +98,59 @@ public class JdbcSchoolStore implements SchoolStore {
             return new GradeRecord(id, studentId, subjectId, teacherId, avaliacao, nota);
         } catch (SQLException e) {
             throw new IllegalStateException("Falha ao publicar nota.", e);
+        }
+    }
+
+    @Override
+    public GradeRecord createGradeForAssessment(int assessmentId, int studentId, int subjectId, int teacherId, String avaliacao, double nota) {
+        String sql = "INSERT INTO grades(student_id, subject_id, teacher_id, assessment_id, avaliacao, nota) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, studentId);
+            ps.setInt(2, subjectId);
+            ps.setInt(3, teacherId);
+            ps.setInt(4, assessmentId);
+            ps.setString(5, avaliacao);
+            ps.setDouble(6, nota);
+            ps.executeUpdate();
+            int id = generatedId(ps);
+            return new GradeRecord(id, studentId, subjectId, teacherId, avaliacao, nota);
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao criar nota para avaliacao.", e);
+        }
+    }
+
+    @Override
+    public GradeRecord updateGrade(int gradeId, double nota) {
+        String update = "UPDATE grades SET nota = ? WHERE id = ?";
+        String select = "SELECT id, student_id, subject_id, teacher_id, avaliacao, nota FROM grades WHERE id = ?";
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(update)) {
+            ps.setDouble(1, nota);
+            ps.setInt(2, gradeId);
+            int count = ps.executeUpdate();
+            if (count == 0) {
+                throw new IllegalArgumentException("Nota nao encontrada.");
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao atualizar nota.", e);
+        }
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(select)) {
+            ps.setInt(1, gradeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return new GradeRecord(
+                        rs.getInt("id"),
+                        rs.getInt("student_id"),
+                        rs.getInt("subject_id"),
+                        rs.getInt("teacher_id"),
+                        rs.getString("avaliacao"),
+                        rs.getDouble("nota")
+                );
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao ler nota atualizada.", e);
         }
     }
 
@@ -160,6 +229,101 @@ public class JdbcSchoolStore implements SchoolStore {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Falha ao procurar disciplina.", e);
+        }
+    }
+
+    @Override
+    public Optional<Assessment> findAssessment(int assessmentId) {
+        String sql = "SELECT id, subject_id, teacher_id, nome FROM assessments WHERE id = ?";
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, assessmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return Optional.empty();
+                }
+                return Optional.of(new Assessment(
+                        rs.getInt("id"),
+                        rs.getInt("subject_id"),
+                        rs.getInt("teacher_id"),
+                        rs.getString("nome")
+                ));
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao procurar avaliacao.", e);
+        }
+    }
+
+    @Override
+    public Optional<Assessment> findAssessmentByName(int subjectId, int teacherId, String nome) {
+        String sql = "SELECT id, subject_id, teacher_id, nome FROM assessments WHERE subject_id = ? AND teacher_id = ? AND nome = ?";
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, subjectId);
+            ps.setInt(2, teacherId);
+            ps.setString(3, nome);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return Optional.empty();
+                }
+                return Optional.of(new Assessment(
+                        rs.getInt("id"),
+                        rs.getInt("subject_id"),
+                        rs.getInt("teacher_id"),
+                        rs.getString("nome")
+                ));
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao procurar avaliacao por nome.", e);
+        }
+    }
+
+    @Override
+    public Optional<GradeRecord> findGrade(int gradeId) {
+        String sql = "SELECT id, student_id, subject_id, teacher_id, avaliacao, nota FROM grades WHERE id = ?";
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, gradeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return Optional.empty();
+                }
+                return Optional.of(new GradeRecord(
+                        rs.getInt("id"),
+                        rs.getInt("student_id"),
+                        rs.getInt("subject_id"),
+                        rs.getInt("teacher_id"),
+                        rs.getString("avaliacao"),
+                        rs.getDouble("nota")
+                ));
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao procurar nota.", e);
+        }
+    }
+
+    @Override
+    public Optional<GradeRecord> findGradeByAssessmentAndStudent(int assessmentId, int studentId) {
+        String sql = "SELECT id, student_id, subject_id, teacher_id, avaliacao, nota FROM grades WHERE assessment_id = ? AND student_id = ?";
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, assessmentId);
+            ps.setInt(2, studentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return Optional.empty();
+                }
+                return Optional.of(new GradeRecord(
+                        rs.getInt("id"),
+                        rs.getInt("student_id"),
+                        rs.getInt("subject_id"),
+                        rs.getInt("teacher_id"),
+                        rs.getString("avaliacao"),
+                        rs.getDouble("nota")
+                ));
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao procurar nota da avaliacao.", e);
         }
     }
 
@@ -249,6 +413,30 @@ public class JdbcSchoolStore implements SchoolStore {
     }
 
     @Override
+    public List<Assessment> getAssessmentsByTeacherAndSubject(int teacherId, int subjectId) {
+        String sql = "SELECT id, subject_id, teacher_id, nome FROM assessments WHERE teacher_id = ? AND subject_id = ? ORDER BY id DESC";
+        List<Assessment> assessments = new ArrayList<>();
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, teacherId);
+            ps.setInt(2, subjectId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    assessments.add(new Assessment(
+                            rs.getInt("id"),
+                            rs.getInt("subject_id"),
+                            rs.getInt("teacher_id"),
+                            rs.getString("nome")
+                    ));
+                }
+            }
+            return assessments;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao listar avaliacoes da disciplina.", e);
+        }
+    }
+
+    @Override
     public List<Subject> getEnrolledSubjectsByStudent(int studentId) {
         String sql = "SELECT s.id, s.nome, s.course_id, s.teacher_id " +
                 "FROM subjects s " +
@@ -292,6 +480,31 @@ public class JdbcSchoolStore implements SchoolStore {
             return grades;
         } catch (SQLException e) {
             throw new IllegalStateException("Falha ao listar notas do estudante.", e);
+        }
+    }
+
+    @Override
+    public List<GradeRecord> getGradesByAssessment(int assessmentId) {
+        String sql = "SELECT id, student_id, subject_id, teacher_id, avaliacao, nota FROM grades WHERE assessment_id = ? ORDER BY id";
+        List<GradeRecord> grades = new ArrayList<>();
+        try (Connection c = connection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, assessmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    grades.add(new GradeRecord(
+                            rs.getInt("id"),
+                            rs.getInt("student_id"),
+                            rs.getInt("subject_id"),
+                            rs.getInt("teacher_id"),
+                            rs.getString("avaliacao"),
+                            rs.getDouble("nota")
+                    ));
+                }
+            }
+            return grades;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Falha ao listar notas da avaliacao.", e);
         }
     }
 
@@ -520,8 +733,17 @@ public class JdbcSchoolStore implements SchoolStore {
                     "student_id INT NOT NULL," +
                     "subject_id INT NOT NULL," +
                     "teacher_id INT NOT NULL," +
+                    "assessment_id INT NULL," +
                     "avaliacao VARCHAR(120) NOT NULL," +
                     "nota DECIMAL(5,2) NOT NULL" +
+                    ")");
+            ensureAssessmentColumnExists(st);
+            st.execute("CREATE TABLE IF NOT EXISTS assessments (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "subject_id INT NOT NULL," +
+                    "teacher_id INT NOT NULL," +
+                    "nome VARCHAR(120) NOT NULL," +
+                    "UNIQUE KEY uq_assessment_subject_teacher_name (subject_id, teacher_id, nome)" +
                     ")");
             st.execute("CREATE TABLE IF NOT EXISTS enrollments (" +
                     "student_id INT NOT NULL," +
@@ -532,6 +754,17 @@ public class JdbcSchoolStore implements SchoolStore {
                     ")");
         } catch (SQLException e) {
             throw new IllegalStateException("Falha ao inicializar schema MySQL.", e);
+        }
+    }
+
+    private void ensureAssessmentColumnExists(Statement st) throws SQLException {
+        try {
+            st.execute("ALTER TABLE grades ADD COLUMN assessment_id INT NULL");
+        } catch (SQLException e) {
+            // MySQL older versions don't support IF NOT EXISTS for columns.
+            if (e.getErrorCode() != 1060) { // ER_DUP_FIELDNAME
+                throw e;
+            }
         }
     }
 

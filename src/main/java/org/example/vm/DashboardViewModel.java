@@ -43,9 +43,11 @@ public class DashboardViewModel {
     private Student selectedStudentForEnrollment;
     private Subject selectedSubjectForEnrollment;
     private Subject selectedSubjectForGrade;
+    private Assessment selectedAssessmentForGrade;
     private Student selectedStudentForGrade;
 
     private String avaliacao;
+    private String newAssessmentName;
     private Double nota;
     private String activeSection;
 
@@ -174,27 +176,64 @@ public class DashboardViewModel {
     }
 
     @Command
-    @NotifyChange("*")
-    public void publicarNota() {
-        if (selectedStudentForGrade == null || selectedSubjectForGrade == null || avaliacao == null || avaliacao.isBlank() || nota == null) {
-            throw new IllegalArgumentException("Preencha os dados da avaliacao.");
+    @NotifyChange({"selectedAssessmentForGrade", "subjectAssessmentsForGrade", "assessmentGradesForEditor", "newAssessmentName"})
+    public void criarAvaliacaoProfessor() {
+        if (selectedSubjectForGrade == null || newAssessmentName == null || newAssessmentName.isBlank()) {
+            throw new IllegalArgumentException("Selecione disciplina e informe o nome da avaliacao.");
         }
-        schoolService.publicarNota(
+        selectedAssessmentForGrade = schoolService.criarAvaliacao(
                 authUser.getId(),
-                selectedStudentForGrade.getId(),
                 selectedSubjectForGrade.getId(),
-                avaliacao,
+                newAssessmentName
+        );
+        newAssessmentName = "";
+        Messagebox.show("Avaliacao criada com sucesso.");
+    }
+
+    @Command
+    @NotifyChange({"nota", "assessmentGradesForEditor"})
+    public void publicarNota() {
+        if (selectedAssessmentForGrade == null || selectedStudentForGrade == null || nota == null) {
+            throw new IllegalArgumentException("Selecione avaliacao, estudante e nota.");
+        }
+        schoolService.publicarNotaPorAvaliacao(
+                authUser.getId(),
+                selectedAssessmentForGrade.getId(),
+                selectedStudentForGrade.getId(),
                 nota
         );
-        avaliacao = "";
         nota = null;
         Messagebox.show("Nota publicada com sucesso.");
     }
 
     @Command
-    @NotifyChange({"selectedStudentForGrade", "eligibleStudentsForGrade", "selectedSubjectCourseName"})
+    @NotifyChange({
+            "selectedStudentForGrade",
+            "selectedAssessmentForGrade",
+            "eligibleStudentsForGrade",
+            "selectedSubjectCourseName",
+            "subjectAssessmentsForGrade",
+            "assessmentGradesForEditor"
+    })
     public void onTeacherSubjectChange() {
         selectedStudentForGrade = null;
+        selectedAssessmentForGrade = null;
+    }
+
+    @Command
+    @NotifyChange({"selectedStudentForGrade", "eligibleStudentsForGrade", "assessmentGradesForEditor"})
+    public void onTeacherAssessmentChange() {
+        selectedStudentForGrade = null;
+    }
+
+    @Command
+    @NotifyChange("assessmentGradesForEditor")
+    public void atualizarNota(@BindingParam("row") AssessmentGradeEditorView row) {
+        if (row == null) {
+            throw new IllegalArgumentException("Linha de nota invalida.");
+        }
+        schoolService.atualizarNota(authUser.getId(), row.getGradeId(), row.getNota());
+        Messagebox.show("Nota atualizada com sucesso.");
     }
 
     @Command
@@ -316,10 +355,37 @@ public class DashboardViewModel {
     }
 
     public List<Student> getEligibleStudentsForGrade() {
+        if (!isProfessor()) {
+            return List.of();
+        }
+        if (selectedAssessmentForGrade != null) {
+            return schoolService.listarEstudantesInscritosNaDisciplina(selectedAssessmentForGrade.getSubjectId());
+        }
+        if (selectedSubjectForGrade != null) {
+            return schoolService.listarEstudantesInscritosNaDisciplina(selectedSubjectForGrade.getId());
+        }
+        return List.of();
+    }
+
+    public List<Assessment> getSubjectAssessmentsForGrade() {
         if (!isProfessor() || selectedSubjectForGrade == null) {
             return List.of();
         }
-        return schoolService.listarEstudantesInscritosNaDisciplina(selectedSubjectForGrade.getId());
+        return schoolService.listarAvaliacoesDaDisciplinaDoProfessor(authUser.getId(), selectedSubjectForGrade.getId());
+    }
+
+    public List<AssessmentGradeEditorView> getAssessmentGradesForEditor() {
+        if (!isProfessor() || selectedAssessmentForGrade == null) {
+            return List.of();
+        }
+        return schoolService.listarNotasDaAvaliacao(selectedAssessmentForGrade.getId()).stream()
+                .map(g -> new AssessmentGradeEditorView(
+                        g.getId(),
+                        g.getStudentId(),
+                        g.getEstudante(),
+                        g.getNota()
+                ))
+                .collect(Collectors.toList());
     }
 
     public List<Subject> getEligibleSubjectsForEnrollment() {
@@ -400,6 +466,19 @@ public class DashboardViewModel {
             return List.of();
         }
         return schoolService.listarDisciplinasInscritasDoEstudante(authUser.getId());
+    }
+
+    public List<StudentEnrolledSubjectView> getMyCourseSubjectViews() {
+        if (!isEstudante()) {
+            return List.of();
+        }
+        return schoolService.listarDisciplinasInscritasDoEstudante(authUser.getId()).stream()
+                .map(subject -> new StudentEnrolledSubjectView(
+                        subject.getId(),
+                        subject.getNome(),
+                        getTeacherName(subject.getTeacherId())
+                ))
+                .collect(Collectors.toList());
     }
 
     public String getTeacherName(Integer teacherId) {
@@ -671,12 +750,28 @@ public class DashboardViewModel {
         this.avaliacao = avaliacao;
     }
 
+    public String getNewAssessmentName() {
+        return newAssessmentName;
+    }
+
+    public void setNewAssessmentName(String newAssessmentName) {
+        this.newAssessmentName = newAssessmentName;
+    }
+
     public Double getNota() {
         return nota;
     }
 
     public void setNota(Double nota) {
         this.nota = nota;
+    }
+
+    public Assessment getSelectedAssessmentForGrade() {
+        return selectedAssessmentForGrade;
+    }
+
+    public void setSelectedAssessmentForGrade(Assessment selectedAssessmentForGrade) {
+        this.selectedAssessmentForGrade = selectedAssessmentForGrade;
     }
 
     public static class StudentCourseAssociationView {
@@ -712,6 +807,40 @@ public class DashboardViewModel {
 
         public int getEnrolledSubjects() {
             return enrolledSubjects;
+        }
+    }
+
+    public static class AssessmentGradeEditorView {
+        private final int gradeId;
+        private final int studentId;
+        private final String studentName;
+        private double nota;
+
+        public AssessmentGradeEditorView(int gradeId, int studentId, String studentName, double nota) {
+            this.gradeId = gradeId;
+            this.studentId = studentId;
+            this.studentName = studentName;
+            this.nota = nota;
+        }
+
+        public int getGradeId() {
+            return gradeId;
+        }
+
+        public int getStudentId() {
+            return studentId;
+        }
+
+        public String getStudentName() {
+            return studentName;
+        }
+
+        public double getNota() {
+            return nota;
+        }
+
+        public void setNota(double nota) {
+            this.nota = nota;
         }
     }
 
@@ -802,6 +931,30 @@ public class DashboardViewModel {
 
         public String getCourseName() {
             return courseName;
+        }
+    }
+
+    public static class StudentEnrolledSubjectView {
+        private final int id;
+        private final String nome;
+        private final String teacherName;
+
+        public StudentEnrolledSubjectView(int id, String nome, String teacherName) {
+            this.id = id;
+            this.nome = nome;
+            this.teacherName = teacherName;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public String getNome() {
+            return nome;
+        }
+
+        public String getTeacherName() {
+            return teacherName;
         }
     }
 }

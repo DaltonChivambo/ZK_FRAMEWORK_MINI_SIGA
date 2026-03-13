@@ -16,7 +16,13 @@ public interface SchoolStore {
 
     Subject createSubject(String nome, int courseId);
 
+    Assessment createAssessment(int subjectId, int teacherId, String nome);
+
     GradeRecord createGrade(int studentId, int subjectId, int teacherId, String avaliacao, double nota);
+
+    GradeRecord createGradeForAssessment(int assessmentId, int studentId, int subjectId, int teacherId, String avaliacao, double nota);
+
+    GradeRecord updateGrade(int gradeId, double nota);
 
     Optional<User> findByUsername(String username);
 
@@ -30,6 +36,14 @@ public interface SchoolStore {
 
     Optional<Subject> findSubject(int subjectId);
 
+    Optional<Assessment> findAssessment(int assessmentId);
+
+    Optional<Assessment> findAssessmentByName(int subjectId, int teacherId, String nome);
+
+    Optional<GradeRecord> findGrade(int gradeId);
+
+    Optional<GradeRecord> findGradeByAssessmentAndStudent(int assessmentId, int studentId);
+
     List<User> getUsers();
 
     List<Student> getStudents();
@@ -40,9 +54,13 @@ public interface SchoolStore {
 
     List<Subject> getSubjects();
 
+    List<Assessment> getAssessmentsByTeacherAndSubject(int teacherId, int subjectId);
+
     List<Subject> getEnrolledSubjectsByStudent(int studentId);
 
     List<GradeRecord> getGradesByStudent(int studentId);
+
+    List<GradeRecord> getGradesByAssessment(int assessmentId);
 
     void assignStudentToCourse(int studentId, int courseId);
 

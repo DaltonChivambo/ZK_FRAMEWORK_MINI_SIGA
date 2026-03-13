@@ -68,24 +68,93 @@ public class SchoolService {
     }
 
     public GradeRecord publicarNota(int teacherId, int studentId, int subjectId, String avaliacao, double nota) {
+        Assessment assessment = store.findAssessmentByName(subjectId, teacherId, avaliacao)
+                .orElseGet(() -> criarAvaliacao(teacherId, subjectId, avaliacao));
+        return publicarNotaPorAvaliacao(teacherId, assessment.getId(), studentId, nota);
+    }
+
+    public Assessment criarAvaliacao(int teacherId, int subjectId, String nome) {
         Teacher teacher = store.findTeacher(teacherId)
                 .orElseThrow(() -> new IllegalArgumentException("Professor nao encontrado."));
-        Student student = store.findStudent(studentId)
-                .orElseThrow(() -> new IllegalArgumentException("Estudante nao encontrado."));
         Subject subject = store.findSubject(subjectId)
                 .orElseThrow(() -> new IllegalArgumentException("Disciplina nao encontrada."));
-
         if (!teacher.getSubjectIds().contains(subjectId)) {
             throw new IllegalArgumentException("Professor nao associado a disciplina.");
         }
-        if (!store.isStudentEnrolledInSubject(studentId, subjectId)) {
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("Informe o nome da avaliacao.");
+        }
+        return store.findAssessmentByName(subjectId, teacherId, nome)
+                .orElseGet(() -> store.createAssessment(subjectId, teacherId, nome));
+    }
+
+    public List<Assessment> listarAvaliacoesDaDisciplinaDoProfessor(int teacherId, int subjectId) {
+        return store.getAssessmentsByTeacherAndSubject(teacherId, subjectId);
+    }
+
+    public List<GradeView> listarNotasDaAvaliacao(int assessmentId) {
+        return store.getGradesByAssessment(assessmentId)
+                .stream()
+                .map(g -> new GradeView(
+                        g.getId(),
+                        g.getAvaliacao(),
+                        g.getNota(),
+                        store.findSubject(g.getSubjectId()).map(Subject::getNome).orElse("N/A"),
+                        store.findTeacher(g.getTeacherId()).map(Teacher::getNome).orElse("N/A"),
+                        g.getStudentId(),
+                        store.findStudent(g.getStudentId()).map(Student::getNome).orElse("N/A")
+                ))
+                .collect(Collectors.toList());
+    }
+
+    public GradeRecord atualizarNota(int teacherId, int gradeId, double nota) {
+        GradeRecord existing = store.findGrade(gradeId)
+                .orElseThrow(() -> new IllegalArgumentException("Nota nao encontrada."));
+        Teacher teacher = store.findTeacher(teacherId)
+                .orElseThrow(() -> new IllegalArgumentException("Professor nao encontrado."));
+        if (!teacher.getSubjectIds().contains(existing.getSubjectId())) {
+            throw new IllegalArgumentException("Professor nao pode editar esta nota.");
+        }
+        if (nota < 0 || nota > 20) {
+            throw new IllegalArgumentException("Nota invalida. Use intervalo de 0 a 20.");
+        }
+        return store.updateGrade(gradeId, nota);
+    }
+
+    public GradeRecord publicarNotaPorAvaliacao(int teacherId, int assessmentId, int studentId, double nota) {
+        Assessment assessment = store.findAssessment(assessmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Avaliacao nao encontrada."));
+        if (assessment.getTeacherId() != teacherId) {
+            throw new IllegalArgumentException("Avaliacao nao pertence ao professor.");
+        }
+        Student student = store.findStudent(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Estudante nao encontrado."));
+        Subject subject = store.findSubject(assessment.getSubjectId())
+                .orElseThrow(() -> new IllegalArgumentException("Disciplina nao encontrada."));
+        Teacher teacher = store.findTeacher(teacherId)
+                .orElseThrow(() -> new IllegalArgumentException("Professor nao encontrado."));
+
+        if (!teacher.getSubjectIds().contains(subject.getId())) {
+            throw new IllegalArgumentException("Professor nao associado a disciplina.");
+        }
+        if (!store.isStudentEnrolledInSubject(studentId, subject.getId())) {
             throw new IllegalArgumentException("Estudante nao esta inscrito na disciplina.");
         }
         if (nota < 0 || nota > 20) {
             throw new IllegalArgumentException("Nota invalida. Use intervalo de 0 a 20.");
         }
-
-        return store.createGrade(studentId, subjectId, teacherId, avaliacao, nota);
+        Optional<GradeRecord> existing = store.findGradeByAssessmentAndStudent(assessmentId, studentId);
+        if (existing.isPresent()) {
+            return store.updateGrade(existing.get().getId(), nota);
+        }
+        return store.createGradeForAssessment(
+                assessmentId,
+                studentId,
+                subject.getId(),
+                teacherId,
+                assessment.getNome(),
+                nota
+        );
     }
 
     public List<GradeView> listarNotasEstudante(int studentId) {
@@ -167,13 +236,21 @@ public class SchoolService {
         private final double nota;
         private final String disciplina;
         private final String professor;
+        private final int studentId;
+        private final String estudante;
 
         public GradeView(int id, String avaliacao, double nota, String disciplina, String professor) {
+            this(id, avaliacao, nota, disciplina, professor, -1, "");
+        }
+
+        public GradeView(int id, String avaliacao, double nota, String disciplina, String professor, int studentId, String estudante) {
             this.id = id;
             this.avaliacao = avaliacao;
             this.nota = nota;
             this.disciplina = disciplina;
             this.professor = professor;
+            this.studentId = studentId;
+            this.estudante = estudante;
         }
 
         public int getId() {
@@ -194,6 +271,14 @@ public class SchoolService {
 
         public String getProfessor() {
             return professor;
+        }
+
+        public int getStudentId() {
+            return studentId;
+        }
+
+        public String getEstudante() {
+            return estudante;
         }
     }
 }

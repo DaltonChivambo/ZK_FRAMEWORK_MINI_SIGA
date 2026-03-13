@@ -14,11 +14,13 @@ public class InMemorySchoolStore implements SchoolStore {
     private final AtomicInteger userSeq = new AtomicInteger(1);
     private final AtomicInteger courseSeq = new AtomicInteger(1);
     private final AtomicInteger subjectSeq = new AtomicInteger(1);
+    private final AtomicInteger assessmentSeq = new AtomicInteger(1);
     private final AtomicInteger gradeSeq = new AtomicInteger(1);
 
     private final Map<Integer, User> users = new ConcurrentHashMap<>();
     private final Map<Integer, Course> courses = new ConcurrentHashMap<>();
     private final Map<Integer, Subject> subjects = new ConcurrentHashMap<>();
+    private final Map<Integer, Assessment> assessments = new ConcurrentHashMap<>();
     private final Map<Integer, GradeRecord> grades = new ConcurrentHashMap<>();
     private final Map<Integer, List<Integer>> subjectEnrollments = new ConcurrentHashMap<>();
 
@@ -59,6 +61,13 @@ public class InMemorySchoolStore implements SchoolStore {
     }
 
     @Override
+    public Assessment createAssessment(int subjectId, int teacherId, String nome) {
+        Assessment assessment = new Assessment(assessmentSeq.getAndIncrement(), subjectId, teacherId, nome);
+        assessments.put(assessment.getId(), assessment);
+        return assessment;
+    }
+
+    @Override
     public GradeRecord createGrade(int studentId, int subjectId, int teacherId, String avaliacao, double nota) {
         GradeRecord grade = new GradeRecord(
                 gradeSeq.getAndIncrement(),
@@ -70,6 +79,29 @@ public class InMemorySchoolStore implements SchoolStore {
         );
         grades.put(grade.getId(), grade);
         return grade;
+    }
+
+    @Override
+    public GradeRecord createGradeForAssessment(int assessmentId, int studentId, int subjectId, int teacherId, String avaliacao, double nota) {
+        return createGrade(studentId, subjectId, teacherId, avaliacao, nota);
+    }
+
+    @Override
+    public GradeRecord updateGrade(int gradeId, double nota) {
+        GradeRecord existing = grades.get(gradeId);
+        if (existing == null) {
+            throw new IllegalArgumentException("Nota nao encontrada.");
+        }
+        GradeRecord updated = new GradeRecord(
+                existing.getId(),
+                existing.getStudentId(),
+                existing.getSubjectId(),
+                existing.getTeacherId(),
+                existing.getAvaliacao(),
+                nota
+        );
+        grades.put(gradeId, updated);
+        return updated;
     }
 
     @Override
@@ -108,6 +140,37 @@ public class InMemorySchoolStore implements SchoolStore {
     }
 
     @Override
+    public Optional<Assessment> findAssessment(int assessmentId) {
+        return Optional.ofNullable(assessments.get(assessmentId));
+    }
+
+    @Override
+    public Optional<Assessment> findAssessmentByName(int subjectId, int teacherId, String nome) {
+        return assessments.values().stream()
+                .filter(a -> a.getSubjectId() == subjectId && a.getTeacherId() == teacherId && a.getNome().equalsIgnoreCase(nome))
+                .findFirst();
+    }
+
+    @Override
+    public Optional<GradeRecord> findGrade(int gradeId) {
+        return Optional.ofNullable(grades.get(gradeId));
+    }
+
+    @Override
+    public Optional<GradeRecord> findGradeByAssessmentAndStudent(int assessmentId, int studentId) {
+        Assessment assessment = assessments.get(assessmentId);
+        if (assessment == null) {
+            return Optional.empty();
+        }
+        return grades.values().stream()
+                .filter(g -> g.getStudentId() == studentId
+                        && g.getSubjectId() == assessment.getSubjectId()
+                        && g.getTeacherId() == assessment.getTeacherId()
+                        && g.getAvaliacao().equalsIgnoreCase(assessment.getNome()))
+                .findFirst();
+    }
+
+    @Override
     public List<User> getUsers() {
         return new ArrayList<>(users.values());
     }
@@ -141,6 +204,13 @@ public class InMemorySchoolStore implements SchoolStore {
     }
 
     @Override
+    public List<Assessment> getAssessmentsByTeacherAndSubject(int teacherId, int subjectId) {
+        return assessments.values().stream()
+                .filter(a -> a.getTeacherId() == teacherId && a.getSubjectId() == subjectId)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<Subject> getEnrolledSubjectsByStudent(int studentId) {
         return subjects.values().stream()
                 .filter(s -> subjectEnrollments.getOrDefault(s.getId(), List.of()).contains(studentId))
@@ -152,6 +222,19 @@ public class InMemorySchoolStore implements SchoolStore {
         return grades.values()
                 .stream()
                 .filter(g -> g.getStudentId() == studentId)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<GradeRecord> getGradesByAssessment(int assessmentId) {
+        Assessment assessment = assessments.get(assessmentId);
+        if (assessment == null) {
+            return List.of();
+        }
+        return grades.values().stream()
+                .filter(g -> g.getSubjectId() == assessment.getSubjectId()
+                        && g.getTeacherId() == assessment.getTeacherId()
+                        && g.getAvaliacao().equalsIgnoreCase(assessment.getNome()))
                 .collect(Collectors.toList());
     }
 

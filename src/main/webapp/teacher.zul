@@ -34,7 +34,7 @@
 
                 <div sclass="card" visible="@load(vm.activeSection eq 'teacher-grades')">
                     <label sclass="card-title" value="Publicar Notas"/>
-                    <label sclass="hint-text" value="Selecione a disciplina e o sistema lista apenas estudantes do curso dessa disciplina."/>
+                    <label sclass="hint-text" value="Fluxo: 1) selecione a disciplina; 2) crie/escolha a avaliacao; 3) lance ou edite notas."/>
                     <grid sclass="form-grid">
                         <rows>
                             <row>
@@ -50,6 +50,20 @@
                                 <label value="Curso da Disciplina"/>
                                 <label value="@load(vm.selectedSubjectCourseName)"/>
                             </row>
+                            <row><label value="Nova Avaliacao"/><textbox value="@bind(vm.newAssessmentName)" hflex="1" placeholder="Ex: Teste 1"/></row>
+                            <row>
+                                <label value=""/>
+                                <button sclass="btn-outline" label="Criar Avaliacao" onClick="@command('criarAvaliacaoProfessor')"/>
+                            </row>
+                            <row>
+                                <label value="Avaliacao"/>
+                                <combobox hflex="1" model="@load(vm.subjectAssessmentsForGrade)" selectedItem="@bind(vm.selectedAssessmentForGrade)"
+                                          readonly="true" buttonVisible="true" onChange="@command('onTeacherAssessmentChange')">
+                                    <template name="model" var="a">
+                                        <comboitem label="@load(a.nome)" description="@load(a.id)" value="@load(a)"/>
+                                    </template>
+                                </combobox>
+                            </row>
                             <row>
                                 <label value="Estudante"/>
                                 <combobox hflex="1" model="@load(vm.eligibleStudentsForGrade)" selectedItem="@bind(vm.selectedStudentForGrade)"
@@ -59,11 +73,35 @@
                                     </template>
                                 </combobox>
                             </row>
-                            <row><label value="Avaliacao"/><textbox value="@bind(vm.avaliacao)" hflex="1" placeholder="Ex: Teste 1"/></row>
                             <row><label value="Nota (0-20)"/><doublebox value="@bind(vm.nota)" hflex="1"/></row>
                         </rows>
                     </grid>
-                    <button sclass="btn-primary" label="Publicar Nota" onClick="@command('publicarNota')"/>
+                    <button sclass="btn-primary" label="Salvar Nota" onClick="@command('publicarNota')"/>
+                    <separator/>
+                    <label sclass="ids-title" value="Notas da Avaliacao Selecionada"/>
+                    <listbox model="@load(vm.assessmentGradesForEditor)" width="100%" height="250px"
+                             emptyMessage="Sem notas lancadas para esta avaliacao.">
+                        <listhead>
+                            <listheader label="ID Nota" width="80px"/>
+                            <listheader label="ID Estudante" width="100px"/>
+                            <listheader label="Estudante"/>
+                            <listheader label="Nota" width="120px"/>
+                            <listheader label="Acao" width="140px"/>
+                        </listhead>
+                        <template name="model" var="r">
+                            <listitem>
+                                <listcell label="@load(r.gradeId)"/>
+                                <listcell label="@load(r.studentId)"/>
+                                <listcell label="@load(r.studentName)"/>
+                                <listcell>
+                                    <doublebox value="@bind(r.nota)" hflex="1"/>
+                                </listcell>
+                                <listcell>
+                                    <button sclass="btn-outline" label="Atualizar" onClick="@command('atualizarNota', row=r)"/>
+                                </listcell>
+                            </listitem>
+                        </template>
+                    </listbox>
                 </div>
 
                 <div sclass="card" visible="@load(vm.activeSection eq 'teacher-ids')">

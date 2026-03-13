@@ -54,7 +54,7 @@
 
                 <div sclass="card" visible="@load(vm.activeSection eq 'student-grades')">
                     <label sclass="card-title" value="Minhas Disciplinas Inscritas"/>
-                    <listbox model="@load(vm.myCourseSubjects)" width="100%" emptyMessage="Sem disciplinas inscritas.">
+                    <listbox model="@load(vm.myCourseSubjectViews)" width="100%" emptyMessage="Sem disciplinas inscritas.">
                         <listhead>
                             <listheader label="ID"/>
                             <listheader label="Disciplina"/>
@@ -64,7 +64,7 @@
                             <listitem>
                                 <listcell label="@load(d.id)"/>
                                 <listcell label="@load(d.nome)"/>
-                                <listcell label="@load(vm.teacherName(d.teacherId))"/>
+                                <listcell label="@load(d.teacherName)"/>
                             </listitem>
                         </template>
                     </listbox>
