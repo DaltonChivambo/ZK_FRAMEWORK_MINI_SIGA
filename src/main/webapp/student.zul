@@ -1,0 +1,56 @@
+<?page title="Estudante - Mini SIGA" contentType="text/html;charset=UTF-8"?>
+<?link rel="stylesheet" href="/css/app.css"?>
+<zk>
+    <window border="none" width="100%" sclass="app-shell"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('org.example.vm.DashboardViewModel')">
+
+        <div sclass="app-navbar">
+            <div sclass="nav-left">
+                <label sclass="brand-title small" value="Mini SIGA"/>
+                <label sclass="brand-subtitle" value="@load(vm.pageTitle)"/>
+            </div>
+            <div sclass="nav-right">
+                <label sclass="nav-user" value="@load(vm.displayName)"/>
+                <label sclass="tag-role" value="@load(vm.roleName)"/>
+                <button sclass="btn-outline" label="Sair" onClick="@command('logout')"/>
+            </div>
+        </div>
+
+        <div sclass="app-body">
+            <div sclass="sidebar">
+                <label sclass="sidebar-title" value="Estudante"/>
+                <vlayout spacing="8px" width="100%">
+                    <button sclass="side-btn" label="Minhas Notas" onClick="@command('goTo', section='student-grades')"/>
+                </vlayout>
+            </div>
+
+            <div sclass="main-content">
+                <div sclass="stats-grid">
+                    <div sclass="stat-card"><label value="Total de Avaliacoes"/><label sclass="stat-value" value="@load(vm.myGrades.size())"/></div>
+                    <div sclass="stat-card"><label value="Media Geral"/><label sclass="stat-value" value="@load(vm.myAverage)"/></div>
+                </div>
+
+                <div sclass="card" visible="@load(vm.activeSection eq 'student-grades')">
+                    <label sclass="card-title" value="Minhas Notas e Avaliacoes"/>
+                    <listbox model="@load(vm.myGrades)" width="100%" emptyMessage="Sem notas ainda.">
+                        <listhead>
+                            <listheader label="Disciplina"/>
+                            <listheader label="Avaliacao"/>
+                            <listheader label="Nota"/>
+                            <listheader label="Professor"/>
+                        </listhead>
+                        <template name="model" var="grade">
+                            <listitem>
+                                <listcell label="@load(grade.disciplina)"/>
+                                <listcell label="@load(grade.avaliacao)"/>
+                                <listcell label="@load(grade.nota)"/>
+                                <listcell label="@load(grade.professor)"/>
+                            </listitem>
+                        </template>
+                    </listbox>
+                </div>
+            </div>
+        </div>
+    </window>
+</zk>

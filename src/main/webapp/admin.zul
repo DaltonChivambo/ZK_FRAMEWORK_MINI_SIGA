@@ -1,0 +1,235 @@
+<?page title="Admin - Mini SIGA" contentType="text/html;charset=UTF-8"?>
+<?link rel="stylesheet" href="/css/app.css"?>
+<zk>
+    <window border="none" width="100%" sclass="app-shell"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('org.example.vm.DashboardViewModel')">
+
+        <div sclass="app-navbar">
+            <div sclass="nav-left">
+                <label sclass="brand-title small" value="Mini SIGA"/>
+                <label sclass="brand-subtitle" value="@load(vm.pageTitle)"/>
+            </div>
+            <div sclass="nav-right">
+                <label sclass="nav-user" value="@load(vm.displayName)"/>
+                <label sclass="tag-role" value="@load(vm.roleName)"/>
+                <button sclass="btn-outline" label="Sair" onClick="@command('logout')"/>
+            </div>
+        </div>
+
+        <div sclass="app-body">
+            <div sclass="sidebar">
+                <label sclass="sidebar-title" value="Admin"/>
+                <vlayout spacing="8px" width="100%">
+                    <button sclass="side-btn" label="Estudantes" onClick="@command('goTo', section='admin-students')"/>
+                    <button sclass="side-btn" label="Professores" onClick="@command('goTo', section='admin-teachers')"/>
+                    <button sclass="side-btn" label="Cursos" onClick="@command('goTo', section='admin-courses')"/>
+                    <button sclass="side-btn" label="Disciplinas" onClick="@command('goTo', section='admin-subjects')"/>
+                    <button sclass="side-btn" label="Associacoes" onClick="@command('goTo', section='admin-assignments')"/>
+                    <button sclass="side-btn" label="Referencias IDs" onClick="@command('goTo', section='admin-ids')"/>
+                </vlayout>
+            </div>
+
+            <div sclass="main-content">
+                <div sclass="stats-grid">
+                    <div sclass="stat-card"><label value="Estudantes"/><label sclass="stat-value" value="@load(vm.studentCount)"/></div>
+                    <div sclass="stat-card"><label value="Professores"/><label sclass="stat-value" value="@load(vm.teacherCount)"/></div>
+                    <div sclass="stat-card"><label value="Cursos"/><label sclass="stat-value" value="@load(vm.courseCount)"/></div>
+                    <div sclass="stat-card"><label value="Disciplinas"/><label sclass="stat-value" value="@load(vm.subjectCount)"/></div>
+                </div>
+
+                <div sclass="card" visible="@load(vm.activeSection eq 'admin-students')">
+                    <label sclass="card-title" value="Cadastro de Estudantes"/>
+                    <grid sclass="form-grid">
+                        <rows>
+                            <row><label value="Nome"/><textbox hflex="1" value="@bind(vm.studentNome)" placeholder="Nome completo"/></row>
+                            <row><label value="Username"/><textbox hflex="1" value="@bind(vm.studentUsername)" placeholder="login de acesso"/></row>
+                            <row><label value="Password"/><textbox type="password" hflex="1" value="@bind(vm.studentPassword)" placeholder="senha"/></row>
+                        </rows>
+                    </grid>
+                    <button sclass="btn-primary" label="Criar Estudante" onClick="@command('criarEstudante')"/>
+                    <listbox model="@load(vm.students)" width="100%" height="260px" emptyMessage="Sem estudantes">
+                        <listhead><listheader label="ID" width="55px"/><listheader label="Nome"/><listheader label="Username"/></listhead>
+                        <template name="model" var="s"><listitem><listcell label="@load(s.id)"/><listcell label="@load(s.nome)"/><listcell label="@load(s.username)"/></listitem></template>
+                    </listbox>
+                </div>
+
+                <div sclass="card" visible="@load(vm.activeSection eq 'admin-teachers')">
+                    <label sclass="card-title" value="Cadastro de Professores"/>
+                    <grid sclass="form-grid">
+                        <rows>
+                            <row><label value="Nome"/><textbox hflex="1" value="@bind(vm.teacherNome)" placeholder="Nome completo"/></row>
+                            <row><label value="Username"/><textbox hflex="1" value="@bind(vm.teacherUsername)" placeholder="login de acesso"/></row>
+                            <row><label value="Password"/><textbox type="password" hflex="1" value="@bind(vm.teacherPassword)" placeholder="senha"/></row>
+                        </rows>
+                    </grid>
+                    <button sclass="btn-primary" label="Criar Professor" onClick="@command('criarProfessor')"/>
+                    <listbox model="@load(vm.teachers)" width="100%" height="260px" emptyMessage="Sem professores">
+                        <listhead><listheader label="ID" width="55px"/><listheader label="Nome"/><listheader label="Username"/></listhead>
+                        <template name="model" var="p"><listitem><listcell label="@load(p.id)"/><listcell label="@load(p.nome)"/><listcell label="@load(p.username)"/></listitem></template>
+                    </listbox>
+                </div>
+
+                <div sclass="card" visible="@load(vm.activeSection eq 'admin-courses')">
+                    <label sclass="card-title" value="Cadastro de Cursos"/>
+                    <grid sclass="form-grid">
+                        <rows>
+                            <row><label value="Curso"/><textbox hflex="1" value="@bind(vm.courseNome)" placeholder="Ex: Engenharia Informatica"/></row>
+                        </rows>
+                    </grid>
+                    <button sclass="btn-primary" label="Criar Curso" onClick="@command('criarCurso')"/>
+                    <listbox model="@load(vm.courses)" width="100%" height="260px" emptyMessage="Sem cursos">
+                        <listhead><listheader label="ID" width="55px"/><listheader label="Curso"/></listhead>
+                        <template name="model" var="c"><listitem><listcell label="@load(c.id)"/><listcell label="@load(c.nome)"/></listitem></template>
+                    </listbox>
+                </div>
+
+                <div sclass="card" visible="@load(vm.activeSection eq 'admin-subjects')">
+                    <label sclass="card-title" value="Cadastro de Disciplinas"/>
+                    <grid sclass="form-grid">
+                        <rows>
+                            <row><label value="Disciplina"/><textbox hflex="1" value="@bind(vm.subjectNome)" placeholder="Ex: Programacao Web"/></row>
+                            <row><label value="ID do Curso"/><intbox hflex="1" value="@bind(vm.subjectCourseId)"/></row>
+                        </rows>
+                    </grid>
+                    <button sclass="btn-primary" label="Criar Disciplina" onClick="@command('criarDisciplina')"/>
+                    <listbox model="@load(vm.subjects)" width="100%" height="260px" emptyMessage="Sem disciplinas">
+                        <listhead><listheader label="ID" width="55px"/><listheader label="Disciplina"/><listheader label="Curso" width="70px"/></listhead>
+                        <template name="model" var="d"><listitem><listcell label="@load(d.id)"/><listcell label="@load(d.nome)"/><listcell label="@load(d.courseId)"/></listitem></template>
+                    </listbox>
+                </div>
+
+                <div sclass="card" visible="@load(vm.activeSection eq 'admin-assignments')">
+                    <label sclass="card-title" value="Associacoes"/>
+                    <label sclass="hint-text" value="Selecione pelos nomes para evitar erros de digitacao."/>
+
+                    <div sclass="association-box">
+                        <label sclass="ids-title" value="Associar Estudante ao Curso"/>
+                        <grid sclass="form-grid">
+                            <rows>
+                                <row>
+                                    <label value="Estudante"/>
+                                    <combobox hflex="1" model="@load(vm.students)" selectedItem="@bind(vm.selectedStudentForCourse)" readonly="true" buttonVisible="true">
+                                        <template name="model" var="s">
+                                            <comboitem label="@load(s.nome)" description="@load(s.id)" value="@load(s)"/>
+                                        </template>
+                                    </combobox>
+                                </row>
+                                <row>
+                                    <label value="Curso"/>
+                                    <combobox hflex="1" model="@load(vm.courses)" selectedItem="@bind(vm.selectedCourseForStudent)" readonly="true" buttonVisible="true">
+                                        <template name="model" var="c">
+                                            <comboitem label="@load(c.nome)" description="@load(c.id)" value="@load(c)"/>
+                                        </template>
+                                    </combobox>
+                                </row>
+                            </rows>
+                        </grid>
+                        <button sclass="btn-primary" label="Associar Estudante ao Curso" onClick="@command('associarEstudanteCurso')"/>
+                    </div>
+
+                    <separator/>
+
+                    <div sclass="association-box">
+                        <label sclass="ids-title" value="Associar Professor a Disciplina"/>
+                        <grid sclass="form-grid">
+                            <rows>
+                                <row>
+                                    <label value="Professor"/>
+                                    <combobox hflex="1" model="@load(vm.teachers)" selectedItem="@bind(vm.selectedTeacherForSubject)" readonly="true" buttonVisible="true">
+                                        <template name="model" var="p">
+                                            <comboitem label="@load(p.nome)" description="@load(p.id)" value="@load(p)"/>
+                                        </template>
+                                    </combobox>
+                                </row>
+                                <row>
+                                    <label value="Disciplina"/>
+                                    <combobox hflex="1" model="@load(vm.subjects)" selectedItem="@bind(vm.selectedSubjectForTeacher)" readonly="true" buttonVisible="true">
+                                        <template name="model" var="d">
+                                            <comboitem label="@load(d.nome)" description="@load(d.id)" value="@load(d)"/>
+                                        </template>
+                                    </combobox>
+                                </row>
+                            </rows>
+                        </grid>
+                        <button sclass="btn-primary" label="Associar Professor a Disciplina" onClick="@command('associarProfessorDisciplina')"/>
+                    </div>
+                </div>
+
+                <div sclass="card" visible="@load(vm.activeSection eq 'admin-ids')">
+                    <label sclass="card-title" value="Referencias Rapidas de IDs"/>
+                    <label sclass="hint-text" value="Listas completas para facilitar associacoes por ID."/>
+                    <div sclass="ids-grid">
+                        <div sclass="ids-block">
+                            <label sclass="ids-title" value="Estudantes"/>
+                            <listbox model="@load(vm.students)" width="100%" height="240px" emptyMessage="Sem estudantes">
+                                <listhead>
+                                    <listheader label="ID" width="55px"/>
+                                    <listheader label="Nome"/>
+                                    <listheader label="Curso" width="65px"/>
+                                </listhead>
+                                <template name="model" var="s">
+                                    <listitem>
+                                        <listcell label="@load(s.id)"/>
+                                        <listcell label="@load(s.nome)"/>
+                                        <listcell label="@load(s.courseId)"/>
+                                    </listitem>
+                                </template>
+                            </listbox>
+                        </div>
+
+                        <div sclass="ids-block">
+                            <label sclass="ids-title" value="Professores"/>
+                            <listbox model="@load(vm.teachers)" width="100%" height="240px" emptyMessage="Sem professores">
+                                <listhead>
+                                    <listheader label="ID" width="55px"/>
+                                    <listheader label="Nome"/>
+                                </listhead>
+                                <template name="model" var="p">
+                                    <listitem>
+                                        <listcell label="@load(p.id)"/>
+                                        <listcell label="@load(p.nome)"/>
+                                    </listitem>
+                                </template>
+                            </listbox>
+                        </div>
+
+                        <div sclass="ids-block">
+                            <label sclass="ids-title" value="Cursos"/>
+                            <listbox model="@load(vm.courses)" width="100%" height="240px" emptyMessage="Sem cursos">
+                                <listhead>
+                                    <listheader label="ID" width="55px"/>
+                                    <listheader label="Curso"/>
+                                </listhead>
+                                <template name="model" var="c">
+                                    <listitem>
+                                        <listcell label="@load(c.id)"/>
+                                        <listcell label="@load(c.nome)"/>
+                                    </listitem>
+                                </template>
+                            </listbox>
+                        </div>
+
+                        <div sclass="ids-block">
+                            <label sclass="ids-title" value="Disciplinas"/>
+                            <listbox model="@load(vm.subjects)" width="100%" height="240px" emptyMessage="Sem disciplinas">
+                                <listhead>
+                                    <listheader label="ID" width="55px"/>
+                                    <listheader label="Disciplina"/>
+                                    <listheader label="Curso" width="65px"/>
+                                </listhead>
+                                <template name="model" var="d">
+                                    <listitem>
+                                        <listcell label="@load(d.id)"/>
+                                        <listcell label="@load(d.nome)"/>
+                                        <listcell label="@load(d.courseId)"/>
+                                    </listitem>
+                                </template>
+                            </listbox>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </window>
+</zk>

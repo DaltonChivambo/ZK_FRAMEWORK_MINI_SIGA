@@ -1,0 +1,15 @@
+<?page title="Dashboard - Mini SIGA" contentType="text/html;charset=UTF-8"?>
+<?link rel="stylesheet" href="/css/app.css"?>
+<zk>
+    <window border="none" width="100%" sclass="app-shell"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('org.example.vm.DashboardViewModel')"
+            onCreate="@command('goHome')">
+        <div sclass="login-wrap">
+            <div sclass="login-card">
+                <label sclass="brand-title" value="Mini SIGA"/>
+                <label sclass="brand-subtitle" value="A redirecionar para a sua area..."/>
+            </div>
+        </div>
+    </window>
+</zk>

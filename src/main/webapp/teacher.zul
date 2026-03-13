@@ -1,0 +1,65 @@
+<?page title="Professor - Mini SIGA" contentType="text/html;charset=UTF-8"?>
+<?link rel="stylesheet" href="/css/app.css"?>
+<zk>
+    <window border="none" width="100%" sclass="app-shell"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('org.example.vm.DashboardViewModel')">
+
+        <div sclass="app-navbar">
+            <div sclass="nav-left">
+                <label sclass="brand-title small" value="Mini SIGA"/>
+                <label sclass="brand-subtitle" value="@load(vm.pageTitle)"/>
+            </div>
+            <div sclass="nav-right">
+                <label sclass="nav-user" value="@load(vm.displayName)"/>
+                <label sclass="tag-role" value="@load(vm.roleName)"/>
+                <button sclass="btn-outline" label="Sair" onClick="@command('logout')"/>
+            </div>
+        </div>
+
+        <div sclass="app-body">
+            <div sclass="sidebar">
+                <label sclass="sidebar-title" value="Professor"/>
+                <vlayout spacing="8px" width="100%">
+                    <button sclass="side-btn" label="Publicar Notas" onClick="@command('goTo', section='teacher-grades')"/>
+                    <button sclass="side-btn" label="Referencias IDs" onClick="@command('goTo', section='teacher-ids')"/>
+                </vlayout>
+            </div>
+
+            <div sclass="main-content">
+                <div sclass="stats-grid">
+                    <div sclass="stat-card"><label value="Minhas Disciplinas"/><label sclass="stat-value" value="@load(vm.mySubjects.size())"/></div>
+                    <div sclass="stat-card"><label value="Estudantes Registados"/><label sclass="stat-value" value="@load(vm.studentCount)"/></div>
+                </div>
+
+                <div sclass="card" visible="@load(vm.activeSection eq 'teacher-grades')">
+                    <label sclass="card-title" value="Publicar Notas"/>
+                    <label sclass="hint-text" value="Publique avaliacoes dos estudantes das suas disciplinas."/>
+                    <grid sclass="form-grid">
+                        <rows>
+                            <row><label value="ID do Estudante"/><intbox value="@bind(vm.selectedStudentId)" hflex="1"/></row>
+                            <row><label value="ID da Disciplina"/><intbox value="@bind(vm.selectedSubjectId)" hflex="1"/></row>
+                            <row><label value="Avaliacao"/><textbox value="@bind(vm.avaliacao)" hflex="1" placeholder="Ex: Teste 1"/></row>
+                            <row><label value="Nota (0-20)"/><doublebox value="@bind(vm.nota)" hflex="1"/></row>
+                        </rows>
+                    </grid>
+                    <button sclass="btn-primary" label="Publicar Nota" onClick="@command('publicarNota')"/>
+                </div>
+
+                <div sclass="card" visible="@load(vm.activeSection eq 'teacher-ids')">
+                    <label sclass="card-title" value="Referencias de IDs"/>
+                    <hlayout hflex="1" spacing="12px">
+                        <listbox model="@load(vm.students)" hflex="1" height="220px" emptyMessage="Sem estudantes">
+                            <listhead><listheader label="ID" width="60px"/><listheader label="Estudante"/></listhead>
+                            <template name="model" var="s"><listitem><listcell label="@load(s.id)"/><listcell label="@load(s.nome)"/></listitem></template>
+                        </listbox>
+                        <listbox model="@load(vm.mySubjects)" hflex="1" height="220px" emptyMessage="Sem disciplinas associadas">
+                            <listhead><listheader label="ID" width="60px"/><listheader label="Disciplina"/></listhead>
+                            <template name="model" var="d"><listitem><listcell label="@load(d.id)"/><listcell label="@load(d.nome)"/></listitem></template>
+                        </listbox>
+                    </hlayout>
+                </div>
+            </div>
+        </div>
+    </window>
+</zk>
