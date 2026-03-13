@@ -56,6 +56,17 @@ public class SchoolService {
         store.assignTeacherToSubject(teacherId, subjectId);
     }
 
+    public void associarEstudanteADisciplina(int studentId, int subjectId) {
+        Student student = store.findStudent(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Estudante nao encontrado."));
+        Subject subject = store.findSubject(subjectId)
+                .orElseThrow(() -> new IllegalArgumentException("Disciplina nao encontrada."));
+        if (student.getCourseId() == null || student.getCourseId() != subject.getCourseId()) {
+            throw new IllegalArgumentException("Estudante nao pertence ao curso da disciplina.");
+        }
+        store.enrollStudentInSubject(studentId, subjectId);
+    }
+
     public GradeRecord publicarNota(int teacherId, int studentId, int subjectId, String avaliacao, double nota) {
         Teacher teacher = store.findTeacher(teacherId)
                 .orElseThrow(() -> new IllegalArgumentException("Professor nao encontrado."));
@@ -80,6 +91,7 @@ public class SchoolService {
     public List<GradeView> listarNotasEstudante(int studentId) {
         return store.getGradesByStudent(studentId)
                 .stream()
+                .filter(g -> store.isStudentEnrolledInSubject(studentId, g.getSubjectId()))
                 .map(g -> new GradeView(
                         g.getId(),
                         g.getAvaliacao(),

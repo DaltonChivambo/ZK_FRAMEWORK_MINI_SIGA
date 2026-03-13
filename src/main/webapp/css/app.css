@@ -145,6 +145,13 @@
     gap: 10px;
 }
 
+.association-tabs {
+    border: 1px solid #e6ebff;
+    border-radius: 12px;
+    padding: 6px;
+    background: #fdfdff;
+}
+
 .card {
     background: #ffffff;
     border-radius: 16px;

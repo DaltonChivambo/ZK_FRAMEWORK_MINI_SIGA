@@ -101,111 +101,159 @@
 
                 <div sclass="card" visible="@load(vm.activeSection eq 'admin-assignments')">
                     <label sclass="card-title" value="Associacoes"/>
-                    <label sclass="hint-text" value="Selecione pelos nomes para evitar erros de digitacao."/>
-
-                    <div sclass="association-box">
-                        <label sclass="ids-title" value="Associar Estudante ao Curso"/>
-                        <grid sclass="form-grid">
-                            <rows>
-                                <row>
-                                    <label value="Estudante"/>
-                                    <combobox hflex="1" model="@load(vm.students)" selectedItem="@bind(vm.selectedStudentForCourse)" readonly="true" buttonVisible="true">
-                                        <template name="model" var="s">
-                                            <comboitem label="@load(s.nome)" description="@load(s.id)" value="@load(s)"/>
-                                        </template>
-                                    </combobox>
-                                </row>
-                                <row>
-                                    <label value="Curso"/>
-                                    <combobox hflex="1" model="@load(vm.courses)" selectedItem="@bind(vm.selectedCourseForStudent)" readonly="true" buttonVisible="true">
-                                        <template name="model" var="c">
-                                            <comboitem label="@load(c.nome)" description="@load(c.id)" value="@load(c)"/>
-                                        </template>
-                                    </combobox>
-                                </row>
-                            </rows>
-                        </grid>
-                        <button sclass="btn-primary" label="Associar Estudante ao Curso" onClick="@command('associarEstudanteCurso')"/>
-                    </div>
-
-                    <separator/>
-
-                    <div sclass="association-box">
-                        <label sclass="ids-title" value="Associar Professor a Disciplina"/>
-                        <grid sclass="form-grid">
-                            <rows>
-                                <row>
-                                    <label value="Professor"/>
-                                    <combobox hflex="1" model="@load(vm.teachers)" selectedItem="@bind(vm.selectedTeacherForSubject)" readonly="true" buttonVisible="true">
-                                        <template name="model" var="p">
-                                            <comboitem label="@load(p.nome)" description="@load(p.id)" value="@load(p)"/>
-                                        </template>
-                                    </combobox>
-                                </row>
-                                <row>
-                                    <label value="Disciplina"/>
-                                    <combobox hflex="1" model="@load(vm.subjects)" selectedItem="@bind(vm.selectedSubjectForTeacher)" readonly="true" buttonVisible="true">
-                                        <template name="model" var="d">
-                                            <comboitem label="@load(d.nome)" description="@load(d.id)" value="@load(d)"/>
-                                        </template>
-                                    </combobox>
-                                </row>
-                            </rows>
-                        </grid>
-                        <button sclass="btn-primary" label="Associar Professor a Disciplina" onClick="@command('associarProfessorDisciplina')"/>
-                    </div>
-
-                    <separator/>
-                    <label sclass="card-title" value="Associacoes Atuais"/>
-                    <label sclass="hint-text" value="Visao consolidada das associacoes feitas pelo admin."/>
-                    <div sclass="assoc-grid">
-                        <div sclass="ids-block">
-                            <label sclass="ids-title" value="Estudante -> Curso"/>
-                            <listbox model="@load(vm.studentCourseAssociations)" width="100%" height="260px" emptyMessage="Nenhuma associacao estudante/curso.">
-                                <listhead>
-                                    <listheader label="ID Est." width="65px"/>
-                                    <listheader label="Estudante"/>
-                                    <listheader label="ID Curso" width="75px"/>
-                                    <listheader label="Curso"/>
-                                    <listheader label="Disciplinas" width="90px"/>
-                                </listhead>
-                                <template name="model" var="a">
-                                    <listitem>
-                                        <listcell label="@load(a.studentId)"/>
-                                        <listcell label="@load(a.studentName)"/>
-                                        <listcell label="@load(a.courseId)"/>
-                                        <listcell label="@load(a.courseName)"/>
-                                        <listcell label="@load(a.enrolledSubjects)"/>
-                                    </listitem>
-                                </template>
-                            </listbox>
-                        </div>
-                        <div sclass="ids-block">
-                            <label sclass="ids-title" value="Professor -> Disciplina"/>
-                            <listbox model="@load(vm.teacherSubjectAssociations)" width="100%" height="260px" emptyMessage="Nenhuma associacao professor/disciplina.">
-                                <listhead>
-                                    <listheader label="ID Prof." width="65px"/>
-                                    <listheader label="Professor"/>
-                                    <listheader label="ID Disc." width="70px"/>
-                                    <listheader label="Disciplina"/>
-                                    <listheader label="ID Curso" width="75px"/>
-                                    <listheader label="Curso"/>
-                                    <listheader label="Inscritos" width="80px"/>
-                                </listhead>
-                                <template name="model" var="a">
-                                    <listitem>
-                                        <listcell label="@load(a.teacherId)"/>
-                                        <listcell label="@load(a.teacherName)"/>
-                                        <listcell label="@load(a.subjectId)"/>
-                                        <listcell label="@load(a.subjectName)"/>
-                                        <listcell label="@load(a.courseId)"/>
-                                        <listcell label="@load(a.courseName)"/>
-                                        <listcell label="@load(a.enrolledStudents)"/>
-                                    </listitem>
-                                </template>
-                            </listbox>
-                        </div>
-                    </div>
+                    <label sclass="hint-text" value="Use as abas para associar sem confusao: curso, professor e inscricao em disciplina."/>
+                    <tabbox sclass="association-tabs">
+                        <tabs>
+                            <tab label="Estudante -> Curso"/>
+                            <tab label="Professor -> Disciplina"/>
+                            <tab label="Estudante -> Disciplina"/>
+                        </tabs>
+                        <tabpanels>
+                            <tabpanel>
+                                <div sclass="association-box">
+                                    <grid sclass="form-grid">
+                                        <rows>
+                                            <row>
+                                                <label value="Estudante"/>
+                                                <combobox hflex="1" model="@load(vm.students)" selectedItem="@bind(vm.selectedStudentForCourse)" readonly="true" buttonVisible="true">
+                                                    <template name="model" var="s">
+                                                        <comboitem label="@load(s.nome)" description="@load(s.id)" value="@load(s)"/>
+                                                    </template>
+                                                </combobox>
+                                            </row>
+                                            <row>
+                                                <label value="Curso"/>
+                                                <combobox hflex="1" model="@load(vm.courses)" selectedItem="@bind(vm.selectedCourseForStudent)" readonly="true" buttonVisible="true">
+                                                    <template name="model" var="c">
+                                                        <comboitem label="@load(c.nome)" description="@load(c.id)" value="@load(c)"/>
+                                                    </template>
+                                                </combobox>
+                                            </row>
+                                        </rows>
+                                    </grid>
+                                    <button sclass="btn-primary" label="Associar Estudante ao Curso" onClick="@command('associarEstudanteCurso')"/>
+                                </div>
+                                <separator/>
+                                <label sclass="ids-title" value="Estudante -> Curso"/>
+                                <listbox model="@load(vm.studentCourseAssociations)" width="100%" height="250px" emptyMessage="Nenhuma associacao estudante/curso.">
+                                    <listhead>
+                                        <listheader label="ID Est." width="65px"/>
+                                        <listheader label="Estudante"/>
+                                        <listheader label="ID Curso" width="75px"/>
+                                        <listheader label="Curso"/>
+                                        <listheader label="Disciplinas" width="90px"/>
+                                    </listhead>
+                                    <template name="model" var="a">
+                                        <listitem>
+                                            <listcell label="@load(a.studentId)"/>
+                                            <listcell label="@load(a.studentName)"/>
+                                            <listcell label="@load(a.courseId)"/>
+                                            <listcell label="@load(a.courseName)"/>
+                                            <listcell label="@load(a.enrolledSubjects)"/>
+                                        </listitem>
+                                    </template>
+                                </listbox>
+                            </tabpanel>
+                            <tabpanel>
+                                <div sclass="association-box">
+                                    <grid sclass="form-grid">
+                                        <rows>
+                                            <row>
+                                                <label value="Professor"/>
+                                                <combobox hflex="1" model="@load(vm.teachers)" selectedItem="@bind(vm.selectedTeacherForSubject)" readonly="true" buttonVisible="true">
+                                                    <template name="model" var="p">
+                                                        <comboitem label="@load(p.nome)" description="@load(p.id)" value="@load(p)"/>
+                                                    </template>
+                                                </combobox>
+                                            </row>
+                                            <row>
+                                                <label value="Disciplina"/>
+                                                <combobox hflex="1" model="@load(vm.subjects)" selectedItem="@bind(vm.selectedSubjectForTeacher)" readonly="true" buttonVisible="true">
+                                                    <template name="model" var="d">
+                                                        <comboitem label="@load(d.nome)" description="@load(d.id)" value="@load(d)"/>
+                                                    </template>
+                                                </combobox>
+                                            </row>
+                                        </rows>
+                                    </grid>
+                                    <button sclass="btn-primary" label="Associar Professor a Disciplina" onClick="@command('associarProfessorDisciplina')"/>
+                                </div>
+                                <separator/>
+                                <label sclass="ids-title" value="Professor -> Disciplina"/>
+                                <listbox model="@load(vm.teacherSubjectAssociations)" width="100%" height="250px" emptyMessage="Nenhuma associacao professor/disciplina.">
+                                    <listhead>
+                                        <listheader label="ID Prof." width="65px"/>
+                                        <listheader label="Professor"/>
+                                        <listheader label="ID Disc." width="70px"/>
+                                        <listheader label="Disciplina"/>
+                                        <listheader label="ID Curso" width="75px"/>
+                                        <listheader label="Curso"/>
+                                        <listheader label="Inscritos" width="80px"/>
+                                    </listhead>
+                                    <template name="model" var="a">
+                                        <listitem>
+                                            <listcell label="@load(a.teacherId)"/>
+                                            <listcell label="@load(a.teacherName)"/>
+                                            <listcell label="@load(a.subjectId)"/>
+                                            <listcell label="@load(a.subjectName)"/>
+                                            <listcell label="@load(a.courseId)"/>
+                                            <listcell label="@load(a.courseName)"/>
+                                            <listcell label="@load(a.enrolledStudents)"/>
+                                        </listitem>
+                                    </template>
+                                </listbox>
+                            </tabpanel>
+                            <tabpanel>
+                                <div sclass="association-box">
+                                    <label sclass="hint-text" value="Inscricao manual extra (alem da automatica por curso)."/>
+                                    <grid sclass="form-grid">
+                                        <rows>
+                                            <row>
+                                                <label value="Estudante"/>
+                                                <combobox hflex="1" model="@load(vm.students)" selectedItem="@bind(vm.selectedStudentForEnrollment)"
+                                                          readonly="true" buttonVisible="true" onChange="@command('onEnrollmentStudentChange')">
+                                                    <template name="model" var="s">
+                                                        <comboitem label="@load(s.nome)" description="@load(s.id)" value="@load(s)"/>
+                                                    </template>
+                                                </combobox>
+                                            </row>
+                                            <row>
+                                                <label value="Disciplina"/>
+                                                <combobox hflex="1" model="@load(vm.eligibleSubjectsForEnrollment)" selectedItem="@bind(vm.selectedSubjectForEnrollment)" readonly="true" buttonVisible="true">
+                                                    <template name="model" var="d">
+                                                        <comboitem label="@load(d.nome)" description="@load(d.id)" value="@load(d)"/>
+                                                    </template>
+                                                </combobox>
+                                            </row>
+                                        </rows>
+                                    </grid>
+                                    <button sclass="btn-primary" label="Inscrever Estudante na Disciplina" onClick="@command('associarEstudanteDisciplina')"/>
+                                </div>
+                                <separator/>
+                                <label sclass="ids-title" value="Estudante -> Disciplina"/>
+                                <listbox model="@load(vm.studentSubjectAssociations)" width="100%" height="250px" emptyMessage="Nenhuma inscricao estudante/disciplina.">
+                                    <listhead>
+                                        <listheader label="ID Est." width="65px"/>
+                                        <listheader label="Estudante"/>
+                                        <listheader label="ID Disc." width="70px"/>
+                                        <listheader label="Disciplina"/>
+                                        <listheader label="ID Curso" width="75px"/>
+                                        <listheader label="Curso"/>
+                                    </listhead>
+                                    <template name="model" var="a">
+                                        <listitem>
+                                            <listcell label="@load(a.studentId)"/>
+                                            <listcell label="@load(a.studentName)"/>
+                                            <listcell label="@load(a.subjectId)"/>
+                                            <listcell label="@load(a.subjectName)"/>
+                                            <listcell label="@load(a.courseId)"/>
+                                            <listcell label="@load(a.courseName)"/>
+                                        </listitem>
+                                    </template>
+                                </listbox>
+                            </tabpanel>
+                        </tabpanels>
+                    </tabbox>
                 </div>
 
                 <div sclass="card" visible="@load(vm.activeSection eq 'admin-ids')">

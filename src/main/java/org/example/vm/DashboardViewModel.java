@@ -40,6 +40,8 @@ public class DashboardViewModel {
     private Course selectedCourseForStudent;
     private Teacher selectedTeacherForSubject;
     private Subject selectedSubjectForTeacher;
+    private Student selectedStudentForEnrollment;
+    private Subject selectedSubjectForEnrollment;
     private Subject selectedSubjectForGrade;
     private Student selectedStudentForGrade;
 
@@ -163,6 +165,16 @@ public class DashboardViewModel {
 
     @Command
     @NotifyChange("*")
+    public void associarEstudanteDisciplina() {
+        if (selectedStudentForEnrollment == null || selectedSubjectForEnrollment == null) {
+            throw new IllegalArgumentException("Selecione estudante e disciplina.");
+        }
+        schoolService.associarEstudanteADisciplina(selectedStudentForEnrollment.getId(), selectedSubjectForEnrollment.getId());
+        Messagebox.show("Estudante inscrito na disciplina.");
+    }
+
+    @Command
+    @NotifyChange("*")
     public void publicarNota() {
         if (selectedStudentForGrade == null || selectedSubjectForGrade == null || avaliacao == null || avaliacao.isBlank() || nota == null) {
             throw new IllegalArgumentException("Preencha os dados da avaliacao.");
@@ -183,6 +195,12 @@ public class DashboardViewModel {
     @NotifyChange({"selectedStudentForGrade", "eligibleStudentsForGrade", "selectedSubjectCourseName"})
     public void onTeacherSubjectChange() {
         selectedStudentForGrade = null;
+    }
+
+    @Command
+    @NotifyChange({"selectedSubjectForEnrollment", "eligibleSubjectsForEnrollment"})
+    public void onEnrollmentStudentChange() {
+        selectedSubjectForEnrollment = null;
     }
 
     private void definirSecaoInicial() {
@@ -304,6 +322,16 @@ public class DashboardViewModel {
         return schoolService.listarEstudantesInscritosNaDisciplina(selectedSubjectForGrade.getId());
     }
 
+    public List<Subject> getEligibleSubjectsForEnrollment() {
+        if (selectedStudentForEnrollment == null || selectedStudentForEnrollment.getCourseId() == null) {
+            return List.of();
+        }
+        int courseId = selectedStudentForEnrollment.getCourseId();
+        return schoolService.listarDisciplinas().stream()
+                .filter(s -> s.getCourseId() == courseId)
+                .collect(Collectors.toList());
+    }
+
     public int getEligibleStudentCount() {
         if (!isProfessor()) {
             return 0;
@@ -414,6 +442,22 @@ public class DashboardViewModel {
                         courseById.getOrDefault(s.getCourseId(), "Curso nao encontrado"),
                         schoolService.listarEstudantesInscritosNaDisciplina(s.getId()).size()
                 ))
+                .collect(Collectors.toList());
+    }
+
+    public List<StudentSubjectAssociationView> getStudentSubjectAssociations() {
+        Map<Integer, String> courseById = schoolService.listarCursos().stream()
+                .collect(Collectors.toMap(Course::getId, Course::getNome, (a, b) -> a));
+        return schoolService.listarEstudantes().stream()
+                .flatMap(student -> schoolService.listarDisciplinasInscritasDoEstudante(student.getId()).stream()
+                        .map(subject -> new StudentSubjectAssociationView(
+                                student.getId(),
+                                student.getNome(),
+                                subject.getId(),
+                                subject.getNome(),
+                                subject.getCourseId(),
+                                courseById.getOrDefault(subject.getCourseId(), "Curso nao encontrado")
+                        )))
                 .collect(Collectors.toList());
     }
 
@@ -603,6 +647,22 @@ public class DashboardViewModel {
         this.selectedStudentForGrade = selectedStudentForGrade;
     }
 
+    public Student getSelectedStudentForEnrollment() {
+        return selectedStudentForEnrollment;
+    }
+
+    public void setSelectedStudentForEnrollment(Student selectedStudentForEnrollment) {
+        this.selectedStudentForEnrollment = selectedStudentForEnrollment;
+    }
+
+    public Subject getSelectedSubjectForEnrollment() {
+        return selectedSubjectForEnrollment;
+    }
+
+    public void setSelectedSubjectForEnrollment(Subject selectedSubjectForEnrollment) {
+        this.selectedSubjectForEnrollment = selectedSubjectForEnrollment;
+    }
+
     public String getAvaliacao() {
         return avaliacao;
     }
@@ -700,6 +760,48 @@ public class DashboardViewModel {
 
         public int getEnrolledStudents() {
             return enrolledStudents;
+        }
+    }
+
+    public static class StudentSubjectAssociationView {
+        private final int studentId;
+        private final String studentName;
+        private final int subjectId;
+        private final String subjectName;
+        private final int courseId;
+        private final String courseName;
+
+        public StudentSubjectAssociationView(int studentId, String studentName, int subjectId, String subjectName, int courseId, String courseName) {
+            this.studentId = studentId;
+            this.studentName = studentName;
+            this.subjectId = subjectId;
+            this.subjectName = subjectName;
+            this.courseId = courseId;
+            this.courseName = courseName;
+        }
+
+        public int getStudentId() {
+            return studentId;
+        }
+
+        public String getStudentName() {
+            return studentName;
+        }
+
+        public int getSubjectId() {
+            return subjectId;
+        }
+
+        public String getSubjectName() {
+            return subjectName;
+        }
+
+        public int getCourseId() {
+            return courseId;
+        }
+
+        public String getCourseName() {
+            return courseName;
         }
     }
 }
