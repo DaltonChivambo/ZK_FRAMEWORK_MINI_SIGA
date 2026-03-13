@@ -12,11 +12,11 @@ public final class DbConfig {
     }
 
     public static String user() {
-        return envOrDefault("DB_USER", "root");
+        return envOrDefault("DB_USER", "dalton");
     }
 
     public static String password() {
-        return envOrDefault("DB_PASSWORD", "");
+        return envOrDefault("DB_PASSWORD", "veneno");
     }
 
     private static String envOrDefault(String key, String fallback) {

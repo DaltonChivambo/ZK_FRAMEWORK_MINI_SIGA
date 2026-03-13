@@ -19,8 +19,8 @@ Mini sistema academico com 3 perfis:
 1. Configurar MySQL (a app cria tabelas automaticamente):
    ```bash
    export DB_URL="jdbc:mysql://localhost:3306/mini_siga?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-   export DB_USER="root"
-   export DB_PASSWORD=""
+   export DB_USER="dalton"
+   export DB_PASSWORD="veneno"
    ```
 
 2. Garantir que o MySQL esta ativo.
